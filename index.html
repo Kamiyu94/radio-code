@@ -23,7 +23,6 @@
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
-            /* 禁止選取文字，但允許在特定區域選取(如輸入框) */
             user-select: none; 
         }
 
@@ -55,11 +54,6 @@
             font-weight: bold;
         }
 
-        input {
-            font-family: inherit;
-            user-select: text; /* 允許輸入框選取 */
-        }
-        
         /* --- SCREEN 1: TEAM SELECT (HOME) --- */
         #screen-team-select {
             height: 100%;
@@ -165,19 +159,9 @@
             padding-bottom: calc(50px + env(safe-area-inset-bottom));
         }
 
-        .url-setup {
-            background: #1a1a1a; border: 1px solid #444; padding: 15px; border-radius: 8px; margin-bottom: 20px;
-        }
-        .url-label { color: #888; font-size: 0.8rem; margin-bottom: 5px; display: block; }
-        .url-input {
-            width: 100%; background: #000; border: 1px solid #555; color: var(--highlight);
-            padding: 10px; font-size: 1rem; border-radius: 4px; margin-bottom: 10px;
-        }
-
         .phase-block { margin-bottom: 30px; border-top: 1px dashed #444; padding-top: 20px; }
         .phase-title { color: #fff; font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; color: var(--highlight); }
-        .rescue-info { color: var(--color-alpha); font-size: 0.9rem; margin-bottom: 15px; font-family: monospace; }
-
+        
         .qr-item {
             display: flex; background: #111; border: 1px solid #333; margin-bottom: 15px; padding: 10px; border-radius: 8px; align-items: center;
         }
@@ -250,12 +234,9 @@
             <button class="action-btn" onclick="exitToHome()">BACK</button>
         </div>
         <div class="gen-content">
-            <div class="url-setup">
-                <label class="url-label">BASE URL (mission.html 位址):</label>
-                <input type="text" id="base-url" class="url-input" placeholder="https://your.github.io/mission.html" value="">
-                <button class="action-btn" style="width:100%" onclick="updateQRCodes()">UPDATE QR CODES</button>
+            <div style="color:#666; font-size:0.8rem; margin-bottom:20px; text-align:center;">
+                BASE URL: https://kamiyu94.github.io/radio-code/mission.html
             </div>
-            
             <div id="qr-list">
                 </div>
         </div>
@@ -393,26 +374,15 @@
         function showGenerator() {
             screenSelect.classList.add('hidden');
             screenGen.classList.remove('hidden');
-            
-            // Load saved URL
-            const savedUrl = localStorage.getItem('base_mission_url');
-            if(savedUrl) document.getElementById('base-url').value = savedUrl;
-            
             updateQRCodes();
         }
 
         function updateQRCodes() {
-            const baseUrl = document.getElementById('base-url').value.trim();
+            // 自動鎖定網址
+            const baseUrl = "https://kamiyu94.github.io/radio-code/mission.html";
             const listContainer = document.getElementById('qr-list');
             
-            if(baseUrl) localStorage.setItem('base_mission_url', baseUrl);
-            
             listContainer.innerHTML = '';
-
-            if(!baseUrl) {
-                listContainer.innerHTML = '<div style="color:#888; text-align:center; padding:20px;">PLEASE ENTER BASE URL FIRST</div>';
-                return;
-            }
 
             missionPoints.forEach(phase => {
                 const phaseDiv = document.createElement('div');
@@ -421,7 +391,7 @@
                 
                 phase.points.forEach(p => {
                     const fullUrl = `${baseUrl}?id=${p.id}`;
-                    // Using QR Server API for generation
+                    // Using QR Server API
                     const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(fullUrl)}`;
                     
                     const itemDiv = document.createElement('div');
