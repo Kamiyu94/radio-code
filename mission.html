@@ -11,6 +11,7 @@
             --highlight: #00ff41;
             --danger: #ff3333;
             --warning: #ffcc00;
+            --cool: #00ffff; /* 冷卻色調 */
             --panel-bg: #111111;
             --border: #333;
         }
@@ -69,17 +70,11 @@
         }
 
         .btn:active { background: var(--highlight); color: #000; transform: scale(0.98); }
-        .btn:disabled { border-color: #555; color: #555; cursor: not-allowed; pointer-events: none; }
-
+        
         /* --- Specific Screens --- */
 
         /* 1. PIN Screen */
         #screen-pin { z-index: 10; }
-        
-        /* 2. Operator Screen */
-        .op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 400px; }
-        .op-btn { height: 100px; border: 2px solid #444; border-radius: 10px; background: #1a1a1a; color: #fff; font-size: 1.2rem; }
-        .op-btn.disabled { opacity: 0.3; border-style: dashed; }
         
         /* 3. Mission Screen */
         .target-icon { font-size: 6rem; margin-bottom: 10px; animation: pulse 2s infinite; }
@@ -97,8 +92,14 @@
         .success-icon { font-size: 5rem; color: var(--highlight); margin-bottom: 20px; }
         .success-msg { color: var(--highlight); font-size: 1.5rem; font-weight: bold; text-align: center; }
 
-        /* Rescue Modal */
-        #rescue-modal {
+        /* 6. Cooldown Screen (New) */
+        #screen-cooldown { background: #0a0a0a; z-index: 15; border-top: 5px solid var(--cool); }
+        .cool-icon { font-size: 5rem; margin-bottom: 20px; filter: grayscale(100%); opacity: 0.5; }
+        .cool-msg { color: var(--cool); font-size: 1.2rem; font-weight: bold; text-align: center; margin-bottom: 40px; line-height: 1.5; }
+        .reboot-btn { border-color: var(--cool); color: var(--cool); font-size: 1rem; padding: 10px; }
+
+        /* Modals */
+        .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); z-index: 100;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -113,18 +114,6 @@
         <p style="color:#666; margin-bottom:20px;">SECURITY CLEARANCE REQUIRED</p>
         <input type="number" id="pin-input" class="input-box" placeholder="PIN CODE">
         <button class="btn" onclick="checkPin()">ENTER</button>
-    </div>
-
-    <div id="screen-operator" class="screen hidden">
-        <h2>IDENTIFY OPERATOR</h2>
-        <p style="color:#666; margin-bottom:20px;">WHO IS OPERATING?</p>
-        <div class="op-grid">
-            <button class="op-btn" id="op-1" onclick="selectOperator(1)">OP 1</button>
-            <button class="op-btn" id="op-2" onclick="selectOperator(2)">OP 2</button>
-            <button class="op-btn" id="op-3" onclick="selectOperator(3)">OP 3</button>
-            <button class="op-btn" id="op-4" onclick="selectOperator(4)">OP 4</button>
-        </div>
-        <p id="op-hint" style="color:var(--danger); font-size:0.8rem; margin-top:20px; opacity:0;">PREVIOUS OPERATOR FATIGUED</p>
     </div>
 
     <div id="screen-mission" class="screen hidden">
@@ -159,11 +148,29 @@
         </div>
     </div>
 
-    <div id="rescue-modal" class="hidden">
+    <div id="screen-cooldown" class="screen hidden">
+        <div class="cool-icon">🔋</div>
+        <div class="cool-msg">
+            TERMINAL DISCHARGED<br>
+            DATA UPLOAD COMPLETE<br><br>
+            請更換裝置進行任務<br>
+            SWITCH TO ANOTHER DEVICE
+        </div>
+        <button class="btn reboot-btn" onclick="showRebootModal()">SYSTEM REBOOT (8964)</button>
+    </div>
+
+    <div id="rescue-modal" class="modal-overlay hidden">
         <h2 style="color:red;">OVERRIDE LOCK</h2>
-        <input type="number" id="rescue-input" class="input-box" placeholder="RESCUE PIN">
+        <input type="number" id="rescue-input" class="input-box" placeholder="RESCUE CODE">
         <button class="btn" style="border-color:red; color:red;" onclick="attemptRescue()">UNLOCK</button>
         <button class="btn" style="border-color:#666; color:#666;" onclick="document.getElementById('rescue-modal').classList.add('hidden')">CANCEL</button>
+    </div>
+
+    <div id="reboot-modal" class="modal-overlay hidden">
+        <h2 style="color:var(--cool);">SYSTEM REBOOT</h2>
+        <input type="number" id="reboot-input" class="input-box" placeholder="ADMIN PIN">
+        <button class="btn" style="border-color:var(--cool); color:var(--cool);" onclick="attemptReboot()">REBOOT</button>
+        <button class="btn" style="border-color:#666; color:#666;" onclick="document.getElementById('reboot-modal').classList.add('hidden')">CANCEL</button>
     </div>
 
     <script>
@@ -199,11 +206,10 @@
         const missionId = urlParams.get('id');
         let missionData = null;
 
-        // System State
+        // GLOBAL DEVICE STATE (Shared across all URLs)
+        let globalStatus = localStorage.getItem('global_device_status') || 'FRESH'; // FRESH, LOCKED, DISCHARGED
         let wrongAttempts = parseInt(localStorage.getItem(`attempts_${missionId}`)) || 0;
-        let isLocked = localStorage.getItem(`locked_${missionId}`) === 'true';
         let usedRescueCodes = JSON.parse(localStorage.getItem('used_rescue')) || [];
-        let lastOperator = localStorage.getItem('last_operator');
 
         // --- INITIALIZATION ---
         window.onload = function() {
@@ -213,19 +219,13 @@
             }
             missionData = missions[missionId];
 
-            if (isLocked) {
+            // 1. Check Global Device Status
+            if (globalStatus === 'LOCKED') {
                 showScreen('screen-locked');
+            } else if (globalStatus === 'DISCHARGED') {
+                showScreen('screen-cooldown');
             } else {
                 showScreen('screen-pin');
-            }
-
-            if(lastOperator) {
-                const btn = document.getElementById(`op-${lastOperator}`);
-                if(btn) {
-                    btn.classList.add('disabled');
-                    btn.disabled = true;
-                    document.getElementById('op-hint').style.opacity = 1;
-                }
             }
         };
 
@@ -239,16 +239,20 @@
         function checkPin() {
             const pin = document.getElementById('pin-input').value;
             if (pin === '2758') {
-                showScreen('screen-operator');
+                initMission(); // Directly go to mission, no operator selection
+            } else if (pin === '8964') {
+                fullReset();
             } else {
                 shakeElement(document.getElementById('pin-input'));
                 document.getElementById('pin-input').value = '';
             }
         }
 
-        function selectOperator(opId) {
-            localStorage.setItem('last_operator', opId);
-            initMission();
+        function fullReset() {
+            if(confirm('⚠ SYSTEM RESET ⚠\n確定要重置此裝置的所有狀態嗎？')) {
+                localStorage.clear();
+                location.reload();
+            }
         }
 
         function initMission() {
@@ -262,16 +266,16 @@
             const inputEl = document.getElementById('mission-input');
             let rawInput = inputEl.value.toUpperCase();
             let cleanInput = rawInput.replace(/[^A-Z0-9]/g, '');
-            
-            // 0/O Fuzzy logic
             let fuzzyInput = cleanInput.replace(/0/g, 'O');
             let targetCode = missionData.c.replace(/0/g, 'O');
             
             if (fuzzyInput === targetCode) {
-                showScreen('screen-success');
+                // SUCCESS -> Mark Device as DISCHARGED
+                localStorage.setItem('global_device_status', 'DISCHARGED');
                 localStorage.removeItem(`attempts_${missionId}`);
-                localStorage.removeItem(`locked_${missionId}`);
+                showScreen('screen-success');
             } else {
+                // FAIL
                 wrongAttempts++;
                 localStorage.setItem(`attempts_${missionId}`, wrongAttempts);
                 shakeElement(inputEl);
@@ -296,26 +300,23 @@
         }
 
         function lockSystem() {
-            isLocked = true;
-            localStorage.setItem(`locked_${missionId}`, 'true');
+            // FAILURE -> Mark Device as LOCKED (Globally)
+            localStorage.setItem('global_device_status', 'LOCKED');
+            globalStatus = 'LOCKED';
             showScreen('screen-locked');
         }
 
-        // --- TAP TO UNLOCK LOGIC ---
+        // --- TAP TO UNLOCK LOGIC (RED SCREEN) ---
         let tapCount = 0;
         let tapTimer;
 
         function unlockTap() {
             tapCount++;
             clearTimeout(tapTimer);
-            
             if (tapCount >= 5) {
-                // Reset count and show modal
                 tapCount = 0;
                 document.getElementById('rescue-modal').classList.remove('hidden');
             }
-            
-            // Reset if user stops tapping for 1 second
             tapTimer = setTimeout(() => { tapCount = 0; }, 1000);
         }
 
@@ -323,31 +324,39 @@
             const code = document.getElementById('rescue-input').value;
             const validCodes = rescueCodes[missionData.cat];
 
-            if (!validCodes.includes(code)) {
-                alert('無效的救援碼 (INVALID CODE)');
-                return;
-            }
+            if (!validCodes.includes(code)) { alert('無效的救援碼'); return; }
+            if (usedRescueCodes.includes(code)) { alert('救援碼已失效'); return; }
 
-            if (usedRescueCodes.includes(code)) {
-                alert('此救援碼已失效 (CODE EXPIRED)');
-                return;
-            }
-
-            // Unlock & Reset
+            // Unlock Procedure
             usedRescueCodes.push(code);
             localStorage.setItem('used_rescue', JSON.stringify(usedRescueCodes));
             
-            // !!! 關鍵修復：徹底重置錯誤計數 !!!
+            // Reset Status to FRESH
             wrongAttempts = 0;
-            isLocked = false;
             localStorage.setItem(`attempts_${missionId}`, 0);
-            localStorage.setItem(`locked_${missionId}`, 'false');
+            localStorage.setItem('global_device_status', 'FRESH');
+            globalStatus = 'FRESH';
             
             document.getElementById('rescue-modal').classList.add('hidden');
             document.getElementById('rescue-input').value = '';
             
-            showScreen('screen-mission');
-            updateAttemptsUI(); // This will now hide the warning because wrongAttempts is 0
+            showScreen('screen-mission'); // Back to mission
+            updateAttemptsUI();
+        }
+
+        // --- REBOOT LOGIC (COOLDOWN SCREEN) ---
+        function showRebootModal() {
+            document.getElementById('reboot-modal').classList.remove('hidden');
+        }
+
+        function attemptReboot() {
+            const pin = document.getElementById('reboot-input').value;
+            if (pin === '8964') {
+                fullReset();
+            } else {
+                alert('無效的 ADMIN PIN');
+                document.getElementById('reboot-input').value = '';
+            }
         }
 
         // --- UTILS ---
