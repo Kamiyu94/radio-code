@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>HQ MASTER CODEBOOK</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-main: #ffffff;
+            --text-dim: #aaaaaa;
+            --panel-bg: #111111;
+            --border-color: #333333;
+            --highlight: #00ff41;
+            
+            /* Team Colors */
+            --color-alpha: #ff3333;
+            --color-bravo: #3388ff;
+            --color-charlie: #00ff41;
+            --color-delta: #ffff33;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            /* 禁止選取文字，但允許在特定區域選取(如輸入框) */
+            user-select: none; 
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            /* 使用 Consolas 等寬字體，確保 0 和 O 容易辨識 (斜線0) */
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-variant-numeric: slashed-zero;
+            margin: 0;
+            padding: 0;
+            /* 使用 dvh 解決手機工具列遮擋問題 */
+            height: 100vh; 
+            height: 100dvh; 
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hidden { display: none !important; }
+        
+        button {
+            font-family: inherit;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        input {
+            font-family: inherit;
+            user-select: text; /* 允許輸入框選取 */
+        }
+        
+        /* --- SCREEN 1: TEAM SELECT (HOME) --- */
+        #screen-team-select {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+
+        .home-header {
+            flex: 0 0 auto;
+            text-align: center;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+
+        .home-header h2 { margin: 0; font-size: 1.8rem; letter-spacing: 2px; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        .home-header p { margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.8; }
+
+        .team-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 15px;
+            min-height: 0;
+            margin-bottom: 15px;
+        }
+
+        .team-btn {
+            width: 100%; height: 100%; font-size: 1.5rem; border-radius: 12px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #000; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .team-btn:active { transform: scale(0.98); }
+
+        .btn-alpha { background-color: var(--color-alpha); }
+        .btn-bravo { background-color: var(--color-bravo); }
+        .btn-charlie { background-color: var(--color-charlie); }
+        .btn-delta { background-color: var(--color-delta); }
+
+        .gen-link-btn {
+            flex: 0 0 50px;
+            background: #222;
+            border: 1px solid #444;
+            color: #888;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+        .gen-link-btn:active { background: #333; color: #fff; }
+
+        /* --- SCREEN 2: MASTER CODEBOOK --- */
+        #screen-master {
+            height: 100%; width: 100%; display: flex; flex-direction: column; background: #000;
+        }
+
+        .master-header {
+            flex: 0 0 60px; background: #1a1a1a; border-bottom: 2px solid var(--highlight);
+            display: flex; justify-content: space-between; align-items: center; padding: 0 15px; z-index: 10;
+        }
+
+        #team-title { font-size: 1.4rem; font-weight: 900; color: var(--highlight); letter-spacing: 1px; }
+
+        .action-btn {
+            background: #333; color: #fff; padding: 8px 16px; border-radius: 4px; font-size: 0.9rem; border: 1px solid #555;
+        }
+
+        #grid-container {
+            flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 20px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; align-content: start;
+        }
+
+        .grid-item {
+            background: #1a1a1a; border: 1px solid #444; border-radius: 8px; aspect-ratio: 1;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .grid-item:active { background: #333; }
+        .grid-icon { font-size: 3rem; margin-bottom: 5px; }
+        .grid-name { font-size: 0.9rem; color: #fff; font-weight: bold; text-align: center; width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+        .bottom-nav {
+            flex: 0 0 auto; width: 100%;
+            height: calc(80px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
+            background: #000; border-top: 1px solid #333; display: flex; z-index: 20;
+        }
+        .nav-btn {
+            flex: 1; background: transparent; color: #666; font-size: 2rem;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .nav-btn.active { color: var(--highlight); background: rgba(255, 255, 255, 0.05); border-top: 3px solid var(--highlight); }
+        .nav-label { font-size: 0.8rem; margin-top: 2px; color: #fff; }
+
+        /* --- SCREEN 3: QR GENERATOR --- */
+        #screen-generator {
+            height: 100%; width: 100%; display: flex; flex-direction: column; background: #000;
+        }
+        
+        .gen-content {
+            flex: 1; overflow-y: auto; padding: 20px;
+            padding-bottom: calc(50px + env(safe-area-inset-bottom));
+        }
+
+        .url-setup {
+            background: #1a1a1a; border: 1px solid #444; padding: 15px; border-radius: 8px; margin-bottom: 20px;
+        }
+        .url-label { color: #888; font-size: 0.8rem; margin-bottom: 5px; display: block; }
+        .url-input {
+            width: 100%; background: #000; border: 1px solid #555; color: var(--highlight);
+            padding: 10px; font-size: 1rem; border-radius: 4px; margin-bottom: 10px;
+        }
+
+        .phase-block { margin-bottom: 30px; border-top: 1px dashed #444; padding-top: 20px; }
+        .phase-title { color: #fff; font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; color: var(--highlight); }
+        .rescue-info { color: var(--color-alpha); font-size: 0.9rem; margin-bottom: 15px; font-family: monospace; }
+
+        .qr-item {
+            display: flex; background: #111; border: 1px solid #333; margin-bottom: 15px; padding: 10px; border-radius: 8px; align-items: center;
+        }
+        .qr-img { width: 100px; height: 100px; background: #fff; margin-right: 15px; border-radius: 4px; }
+        .qr-info { flex: 1; overflow: hidden; }
+        .qr-desc { color: #fff; font-size: 1rem; font-weight: bold; margin-bottom: 5px; }
+        .qr-sub { color: #888; font-size: 0.8rem; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .copy-btn {
+            background: #333; color: #fff; border: 1px solid #555; padding: 5px 10px; font-size: 0.8rem; border-radius: 4px;
+        }
+        .copy-btn:active { background: var(--highlight); color: #000; }
+
+        /* MODAL */
+        #modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
+            display: flex; justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background: #111; border: 2px solid var(--highlight); box-shadow: 0 0 30px var(--highlight);
+            padding: 30px; width: 85%; max-width: 350px; border-radius: 16px; text-align: center;
+            animation: zoomIn 0.2s ease-out;
+        }
+        @keyframes zoomIn { from {transform: scale(0.8); opacity: 0;} to {transform: scale(1); opacity: 1;} }
+        #modal-icon { font-size: 5rem; display: block; margin-bottom: 10px; }
+        #modal-name { font-size: 1.4rem; color: #fff; font-weight: bold; margin-bottom: 20px; display: block; }
+        #modal-code {
+            background: #000; color: var(--highlight); border: 2px dashed #444; font-size: 2.2rem;
+            padding: 15px; border-radius: 8px; letter-spacing: 2px; font-weight: bold;
+        }
+        .modal-hint {
+            margin-top: 20px; color: #fff; font-size: 0.9rem; font-weight: bold;
+            border: 1px solid #555; padding: 5px; border-radius: 4px; display: inline-block; background: #222;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="screen-team-select">
+        <div class="home-header">
+            <h2>HQ MASTER LINK</h2>
+            <p>SELECT TEAM CODEBOOK</p>
+        </div>
+        <div class="team-grid">
+            <button class="team-btn btn-alpha" onclick="selectTeam('alpha')"><b>ALPHA</b></button>
+            <button class="team-btn btn-bravo" onclick="selectTeam('bravo')"><b>BRAVO</b></button>
+            <button class="team-btn btn-charlie" onclick="selectTeam('charlie')"><b>CHARLIE</b></button>
+            <button class="team-btn btn-delta" onclick="selectTeam('delta')"><b>DELTA</b></button>
+        </div>
+        <button class="gen-link-btn" onclick="showGenerator()">[ GENERATE MISSION LINKS & QR ]</button>
+    </div>
+
+    <div id="screen-master" class="hidden">
+        <div class="master-header">
+            <span id="team-title">ALPHA TEAM</span>
+            <button class="action-btn" onclick="exitToHome()">EXIT</button>
+        </div>
+        <div id="grid-container"></div>
+        <div class="bottom-nav">
+            <button class="nav-btn active" onclick="switchCategory('fruits')"><span>🍎</span><span class="nav-label">FRUITS</span></button>
+            <button class="nav-btn" onclick="switchCategory('animals')"><span>🦁</span><span class="nav-label">ANIMALS</span></button>
+            <button class="nav-btn" onclick="switchCategory('plants')"><span>🌲</span><span class="nav-label">PLANTS</span></button>
+        </div>
+    </div>
+
+    <div id="screen-generator" class="hidden">
+        <div class="master-header" style="border-color:#666;">
+            <span style="color:#fff;">MISSION LINKS</span>
+            <button class="action-btn" onclick="exitToHome()">BACK</button>
+        </div>
+        <div class="gen-content">
+            <div class="url-setup">
+                <label class="url-label">BASE URL (mission.html 位址):</label>
+                <input type="text" id="base-url" class="url-input" placeholder="https://your.github.io/mission.html" value="">
+                <button class="action-btn" style="width:100%" onclick="updateQRCodes()">UPDATE QR CODES</button>
+            </div>
+            
+            <div id="qr-list">
+                </div>
+        </div>
+    </div>
+
+    <div id="modal-overlay" class="hidden" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span id="modal-icon">🍎</span>
+            <span id="modal-name">蘋果</span>
+            <div id="modal-code">X4T9</div>
+            <div class="modal-hint" onclick="closeModal()">TAP TO CLOSE</div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATABASE ---
+        const db = {
+            alpha: {
+                fruits: [ {i:"🍇",n:"葡萄",c:"L2Z5"}, {i:"🍉",n:"西瓜",c:"P8K3"}, {i:"🍊",n:"橘子",c:"S4M1"}, {i:"🍋",n:"檸檬",c:"T4W7"}, {i:"🍎",n:"蘋果",c:"X4T9"}, {i:"🍑",n:"桃子",c:"N8R3"}, {i:"🍒",n:"櫻桃",c:"E9I2"}, {i:"🍐",n:"梨子",c:"Q4Y9"}, {i:"🥥",n:"椰子",c:"B1D6"}, {i:"🥑",n:"酪梨",c:"H5J0"}, {i:"🍬",n:"糖果",c:"F3G8"}, {i:"🥭",n:"芒果",c:"K7X1"}, {i:"🍈",n:"哈密瓜",c:"V2C5"}, {i:"🍅",n:"番茄",c:"O6A4"}, {i:"🍓",n:"草莓",c:"U9E2"}, {i:"🍍",n:"鳳梨",c:"Z3N7"} ],
+                animals: [ {i:"🦅",n:"老鷹",c:"D5S2"}, {i:"🐍",n:"蛇",c:"W9F0"}, {i:"🦈",n:"鯊魚",c:"H1J3"}, {i:"🦓",n:"斑馬",c:"O3A0"}, {i:"🐳",n:"鯨魚",c:"V2D6"}, {i:"🐆",n:"獵豹",c:"K8B4"}, {i:"🦁",n:"獅子",c:"C7M1"}, {i:"🦘",n:"袋鼠",c:"G6P9"}, {i:"🐊",n:"鱷魚",c:"X2U5"}, {i:"🦍",n:"大猩猩",c:"T1I8"}, {i:"🦛",n:"河馬",c:"E4Z7"}, {i:"🦒",n:"長頸鹿",c:"N3Y0"}, {i:"🦇",n:"蝙蝠",c:"Q5L2"}, {i:"🦉",n:"貓頭鷹",c:"R9S6"}, {i:"🐪",n:"駱駝",c:"M7H3"}, {i:"🦚",n:"孔雀",c:"A0F1"} ],
+                plants: [ {i:"🌻",n:"向日葵",c:"G2V4"}, {i:"🌵",n:"仙人掌",c:"B8H7"}, {i:"🎋",n:"竹子",c:"L6P2"}, {i:"🍄",n:"蘑菇",c:"S8M2"}, {i:"🌺",n:"扶桑花",c:"F5G8"}, {i:"🌳",n:"橡樹",c:"T1Q9"}, {i:"🍁",n:"楓葉",c:"Z7D5"}, {i:"💐",n:"薰衣草",c:"K3I6"}, {i:"🌿",n:"薄荷",c:"E2A4"}, {i:"🌲",n:"松樹",c:"J3R6"}, {i:"🌾",n:"小麥",c:"Y9X1"}, {i:"🌱",n:"蘆葦",c:"O5N0"}, {i:"🍂",n:"落葉",c:"H4W8"}, {i:"🌼",n:"雛菊",c:"C6U3"}, {i:"🏡",n:"房屋",c:"V0S7"}, {i:"🐚",n:"貝殼",c:"P8M5"} ]
+            },
+            bravo: {
+                fruits: [ {i:"🍌",n:"香蕉",c:"A3O7"}, {i:"🍍",n:"鳳梨",c:"U6Q4"}, {i:"🍐",n:"梨子",c:"B2H9"}, {i:"🍎",n:"蘋果",c:"C5K1"}, {i:"🍉",n:"西瓜",c:"D8M3"}, {i:"🍬",n:"糖果",c:"E0N6"}, {i:"🥝",n:"奇異果",c:"F4P2"}, {i:"🍓",n:"草莓",c:"G7Q5"}, {i:"🥥",n:"椰子",c:"I1R8"}, {i:"🥭",n:"芒果",c:"J9S0"}, {i:"🍇",n:"葡萄",c:"L3T6"}, {i:"🍒",n:"櫻桃",c:"V2X7"}, {i:"🍋",n:"檸檬",c:"W5Y3"}, {i:"🍊",n:"橘子",c:"Z8A4"}, {i:"🍅",n:"番茄",c:"B6C9"}, {i:"🍈",n:"哈密瓜",c:"D1E5"} ],
+                animals: [ {i:"🐯",n:"老虎",c:"Y5N8"}, {i:"🐘",n:"大象",c:"S2K9"}, {i:"🐆",n:"獵豹",c:"F7G1"}, {i:"🐺",n:"狼",c:"H3I6"}, {i:"🐻",n:"熊",c:"J0L4"}, {i:"🦊",n:"狐狸",c:"M8O2"}, {i:"🦁",n:"獅子",c:"P5Q9"}, {i:"🦓",n:"斑馬",c:"R1T7"}, {i:"🦘",n:"袋鼠",c:"U4V0"}, {i:"🦒",n:"長頸鹿",c:"W6X3"}, {i:"🦈",n:"鯊魚",c:"Z9A5"}, {i:"🦅",n:"老鷹",c:"B2C8"}, {i:"🦉",n:"貓頭鷹",c:"D7E1"}, {i:"🐍",n:"蛇",c:"F3G6"}, {i:"🐊",n:"鱷魚",c:"H9I2"}, {i:"🐼",n:"熊貓",c:"K4L0"} ],
+                plants: [ {i:"🌹",n:"玫瑰",c:"M4X0"}, {i:"🍁",n:"楓葉",c:"Z7D5"}, {i:"🌴",n:"椰子樹",c:"A2B6"}, {i:"🍀",n:"幸運草",c:"C9E1"}, {i:"🌻",n:"向日葵",c:"F3G8"}, {i:"🌵",n:"仙人掌",c:"H5I0"}, {i:"🌷",n:"鬱金香",c:"J1K7"}, {i:"🌺",n:"扶桑花",c:"L6N3"}, {i:"🌲",n:"松樹",c:"O8P2"}, {i:"🌾",n:"稻穗",c:"Q4R9"}, {i:"🍄",n:"蘑菇",c:"S0T5"}, {i:"🎋",n:"竹子",c:"U7V1"}, {i:"🌼",n:"雛菊",c:"W2Y6"}, {i:"💐",n:"薰衣草",c:"Z5A3"}, {i:"🌿",n:"薄荷",c:"B9C4"}, {i:"🐚",n:"貝殼",c:"D1E8"} ]
+            },
+            charlie: {
+                fruits: [ {i:"🍓",n:"草莓",c:"V1G5"}, {i:"🍑",n:"桃子",c:"N8R3"}, {i:"🍐",n:"梨子",c:"A4B7"}, {i:"🍋",n:"檸檬",c:"C9D1"}, {i:"🥥",n:"椰子",c:"E2F6"}, {i:"🍇",n:"葡萄",c:"G5H0"}, {i:"🍈",n:"哈密瓜",c:"I8J3"}, {i:"🍉",n:"西瓜",c:"K1L9"}, {i:"🍊",n:"橘子",c:"M6N4"}, {i:"🍍",n:"鳳梨",c:"O3P7"}, {i:"🍎",n:"蘋果",c:"Q0R2"}, {i:"🍌",n:"香蕉",c:"S5T8"}, {i:"🥭",n:"芒果",c:"U7V9"}, {i:"🍅",n:"番茄",c:"W2X5"}, {i:"🍬",n:"糖果",c:"Y6Z1"}, {i:"🥑",n:"酪梨",c:"A9B4"} ],
+                animals: [ {i:"🐺",n:"狼",c:"F6B2"}, {i:"🐼",n:"熊貓",c:"I9E4"}, {i:"🦁",n:"獅子",c:"C2D8"}, {i:"🐅",n:"老虎",c:"G7H1"}, {i:"🦓",n:"斑馬",c:"J3K5"}, {i:"🦅",n:"老鷹",c:"L0M9"}, {i:"🐊",n:"鱷魚",c:"N4O6"}, {i:"🦈",n:"鯊魚",c:"P8Q2"}, {i:"🐘",n:"大象",c:"R1S7"}, {i:"🦉",n:"貓頭鷹",c:"T5U0"}, {i:"🦒",n:"長頸鹿",c:"V9W3"}, {i:"🦛",n:"河馬",c:"X6Y1"}, {i:"🦍",n:"大猩猩",c:"Z2A8"}, {i:"🦊",n:"狐狸",c:"B7C3"}, {i:"🦘",n:"袋鼠",c:"D0E5"}, {i:"🐻",n:"熊",c:"F4G9"} ],
+                plants: [ {i:"🌷",n:"鬱金香",c:"Q7U1"}, {i:"🌴",n:"椰子樹",c:"C5Y9"}, {i:"🍄",n:"蘑菇",c:"S8M2"}, {i:"🎋",n:"竹子",c:"A3B6"}, {i:"🍁",n:"楓葉",c:"D0E4"}, {i:"🌲",n:"松樹",c:"F9G2"}, {i:"🌺",n:"扶桑花",c:"H1I5"}, {i:"🌵",n:"仙人掌",c:"J6K8"}, {i:"🌻",n:"向日葵",c:"L2M7"}, {i:"🌹",n:"玫瑰",c:"N4O0"}, {i:"🍀",n:"幸運草",c:"P8R3"}, {i:"🌾",n:"稻穗",c:"S5T9"}, {i:"💐",n:"薰衣草",c:"V1W6"}, {i:"🌼",n:"雛菊",c:"X7Z2"}, {i:"🌿",n:"薄荷",c:"A9B3"}, {i:"🐚",n:"貝殼",c:"C0D5"} ]
+            },
+            delta: {
+                fruits: [ {i:"🥝",n:"奇異果",c:"J6H2"}, {i:"🍐",n:"梨子",c:"Q4Y9"}, {i:"🥭",n:"芒果",c:"K7X1"}, {i:"🍌",n:"香蕉",c:"A2B5"}, {i:"🍎",n:"蘋果",c:"C8D0"}, {i:"🍒",n:"櫻桃",c:"E3F9"}, {i:"🍇",n:"葡萄",c:"G6I4"}, {i:"🍉",n:"西瓜",c:"L1M7"}, {i:"🍓",n:"草莓",c:"N5O2"}, {i:"🍋",n:"檸檬",c:"P9R3"}, {i:"🍍",n:"鳳梨",c:"S4T8"}, {i:"🍈",n:"哈密瓜",c:"U0V6"}, {i:"🍊",n:"橘子",c:"W7Z1"}, {i:"🥑",n:"酪梨",c:"A5B9"}, {i:"🥥",n:"椰子",c:"C2D6"}, {i:"🍅",n:"番茄",c:"E8F3"} ],
+                animals: [ {i:"🐻",n:"熊",c:"R3Z5"}, {i:"🦊",n:"狐狸",c:"L8P0"}, {i:"🐳",n:"鯨魚",c:"V2D6"}, {i:"🐅",n:"老虎",c:"A7B1"}, {i:"🦁",n:"獅子",c:"C9E4"}, {i:"🐺",n:"狼",c:"F5G8"}, {i:"🐘",n:"大象",c:"H2I6"}, {i:"🦍",n:"大猩猩",c:"J0K3"}, {i:"🐊",n:"鱷魚",c:"M4N9"}, {i:"🐆",n:"獵豹",c:"O6Q2"}, {i:"🦒",n:"長頸鹿",c:"S1T7"}, {i:"🦅",n:"老鷹",c:"U8V3"}, {i:"🦉",n:"貓頭鷹",c:"W5X0"}, {i:"🦇",n:"蝙蝠",c:"Y9Z4"}, {i:"🦛",n:"河馬",c:"A3B8"}, {i:"🦘",n:"袋鼠",c:"C6D2"} ],
+                plants: [ {i:"🍀",n:"幸運草",c:"N9T4"}, {i:"🌾",n:"稻穗",c:"W1E3"}, {i:"🌺",n:"扶桑花",c:"F5G8"}, {i:"🌹",n:"玫瑰",c:"H2I7"}, {i:"🌷",n:"鬱金香",c:"J6K0"}, {i:"🌲",n:"松樹",c:"L4M9"}, {i:"🌻",n:"向日葵",c:"O3P5"}, {i:"🌵",n:"仙人掌",c:"Q8R1"}, {i:"🎋",n:"竹子",c:"S2T6"}, {i:"🍁",n:"楓葉",c:"U7V4"}, {i:"🌴",n:"椰子樹",c:"X0Y5"}, {i:"💐",n:"薰衣草",c:"Z9A3"}, {i:"🌼",n:"雛菊",c:"B8C2"}, {i:"🌿",n:"薄荷",c:"D1E6"}, {i:"🐚",n:"貝殼",c:"F5G0"}, {i:"🏡",n:"房屋",c:"H4I9"} ]
+            }
+        };
+
+        // --- APP STATE ---
+        let currentTeam = null;
+        let currentCat = 'fruits';
+
+        // --- ELEMENTS ---
+        const screenSelect = document.getElementById('screen-team-select');
+        const screenMaster = document.getElementById('screen-master');
+        const screenGen = document.getElementById('screen-generator');
+        const gridContainer = document.getElementById('grid-container');
+        const teamTitle = document.getElementById('team-title');
+        const modal = document.getElementById('modal-overlay');
+        const navBtns = document.querySelectorAll('.nav-btn');
+
+        // --- CORE FUNCTIONS ---
+
+        function selectTeam(team) {
+            currentTeam = team;
+            teamTitle.innerText = team.toUpperCase() + " TEAM";
+            
+            let color = '#00ff41';
+            if(team === 'alpha') color = '#ff3333';
+            if(team === 'bravo') color = '#3388ff';
+            if(team === 'charlie') color = '#00ff41';
+            if(team === 'delta') color = '#ffff33';
+            
+            document.documentElement.style.setProperty('--highlight', color);
+            
+            screenSelect.classList.add('hidden');
+            screenMaster.classList.remove('hidden');
+            
+            switchCategory('fruits');
+        }
+
+        function exitToHome() {
+            screenMaster.classList.add('hidden');
+            screenGen.classList.add('hidden');
+            screenSelect.classList.remove('hidden');
+            currentTeam = null;
+        }
+
+        function switchCategory(cat) {
+            currentCat = cat;
+            navBtns.forEach(btn => {
+                if(btn.innerText.toLowerCase().includes(cat)) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            renderGrid();
+        }
+
+        function renderGrid() {
+            gridContainer.innerHTML = '';
+            const items = db[currentTeam][currentCat];
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'grid-item';
+                div.onclick = () => showModal(item);
+                div.innerHTML = `<div class="grid-icon">${item.i}</div><div class="grid-name">${item.n}</div>`;
+                gridContainer.appendChild(div);
+            });
+        }
+
+        function showModal(item) {
+            document.getElementById('modal-icon').innerText = item.i;
+            document.getElementById('modal-name').innerText = item.n;
+            document.getElementById('modal-code').innerText = item.c;
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+        }
+
+        // --- GENERATOR FUNCTIONS ---
+
+        const missionPoints = [
+            { title: "PHASE 1: FRUITS (Rescue: 7xxx)", points: [
+                { id: 'loc_1', desc: '1. A組地點 (看香蕉/Bravo給)', icon: '🍌' },
+                { id: 'loc_2', desc: '2. B組地點 (看蘋果/Alpha給)', icon: '🍎' },
+                { id: 'loc_3', desc: '3. C組地點 (看奇異果/Delta給)', icon: '🥝' },
+                { id: 'loc_4', desc: '4. D組地點 (看草莓/Charlie給)', icon: '🍓' }
+            ]},
+            { title: "PHASE 2: ANIMALS (Rescue: 8xxx)", points: [
+                { id: 'loc_5', desc: '5. A組地點 (看狼/Charlie給)', icon: '🐺' },
+                { id: 'loc_6', desc: '6. C組地點 (看獅子/Alpha給)', icon: '🦁' },
+                { id: 'loc_7', desc: '7. B組地點 (看熊/Delta給)', icon: '🐻' },
+                { id: 'loc_8', desc: '8. D組地點 (看老虎/Bravo給)', icon: '🐯' }
+            ]},
+            { title: "PHASE 3: PLANTS (Rescue: 9xxx)", points: [
+                { id: 'hq_a', desc: 'HQ-A組 (看幸運草/Delta給)', icon: '🍀' },
+                { id: 'hq_b', desc: 'HQ-B組 (看鬱金香/Charlie給)', icon: '🌷' },
+                { id: 'hq_c', desc: 'HQ-C組 (看玫瑰/Bravo給)', icon: '🌹' },
+                { id: 'hq_d', desc: 'HQ-D組 (看松樹/Alpha給)', icon: '🌲' }
+            ]}
+        ];
+
+        function showGenerator() {
+            screenSelect.classList.add('hidden');
+            screenGen.classList.remove('hidden');
+            
+            // Load saved URL
+            const savedUrl = localStorage.getItem('base_mission_url');
+            if(savedUrl) document.getElementById('base-url').value = savedUrl;
+            
+            updateQRCodes();
+        }
+
+        function updateQRCodes() {
+            const baseUrl = document.getElementById('base-url').value.trim();
+            const listContainer = document.getElementById('qr-list');
+            
+            if(baseUrl) localStorage.setItem('base_mission_url', baseUrl);
+            
+            listContainer.innerHTML = '';
+
+            if(!baseUrl) {
+                listContainer.innerHTML = '<div style="color:#888; text-align:center; padding:20px;">PLEASE ENTER BASE URL FIRST</div>';
+                return;
+            }
+
+            missionPoints.forEach(phase => {
+                const phaseDiv = document.createElement('div');
+                phaseDiv.className = 'phase-block';
+                phaseDiv.innerHTML = `<div class="phase-title">${phase.title}</div>`;
+                
+                phase.points.forEach(p => {
+                    const fullUrl = `${baseUrl}?id=${p.id}`;
+                    // Using QR Server API for generation
+                    const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(fullUrl)}`;
+                    
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'qr-item';
+                    itemDiv.innerHTML = `
+                        <img src="${qrSrc}" class="qr-img" alt="QR">
+                        <div class="qr-info">
+                            <div class="qr-desc">${p.icon} ${p.desc}</div>
+                            <div class="qr-sub">${fullUrl}</div>
+                            <button class="copy-btn" onclick="copyToClipboard('${fullUrl}')">COPY LINK</button>
+                        </div>
+                    `;
+                    phaseDiv.appendChild(itemDiv);
+                });
+                
+                listContainer.appendChild(phaseDiv);
+            });
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('LINK COPIED!');
+            }).catch(err => {
+                console.error('Copy failed', err);
+            });
+        }
+
+    </script>
+</body>
+</html>
