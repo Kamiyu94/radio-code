@@ -29,12 +29,10 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            /* 使用 Consolas 等寬字體，確保 0 和 O 容易辨識 (斜線0) */
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-variant-numeric: slashed-zero;
             margin: 0;
             padding: 0;
-            /* 使用 dvh 解決手機工具列遮擋問題 */
             height: 100vh; 
             height: 100dvh; 
             width: 100vw;
@@ -54,6 +52,11 @@
             font-weight: bold;
         }
 
+        input {
+            font-family: inherit;
+            user-select: text;
+        }
+        
         /* --- SCREEN 1: TEAM SELECT (HOME) --- */
         #screen-team-select {
             height: 100%;
@@ -168,7 +171,11 @@
         .qr-img { width: 100px; height: 100px; background: #fff; margin-right: 15px; border-radius: 4px; }
         .qr-info { flex: 1; overflow: hidden; }
         .qr-desc { color: #fff; font-size: 1rem; font-weight: bold; margin-bottom: 5px; }
+        
+        /* 讓連結可點擊且有樣式 */
         .qr-sub { color: #888; font-size: 0.8rem; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .qr-link { color: var(--highlight); text-decoration: underline; cursor: pointer; }
+        
         .copy-btn {
             background: #333; color: #fff; border: 1px solid #555; padding: 5px 10px; font-size: 0.8rem; border-radius: 4px;
         }
@@ -396,11 +403,14 @@
                     
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'qr-item';
+                    // Added clickable link
                     itemDiv.innerHTML = `
                         <img src="${qrSrc}" class="qr-img" alt="QR">
                         <div class="qr-info">
                             <div class="qr-desc">${p.icon} ${p.desc}</div>
-                            <div class="qr-sub">${fullUrl}</div>
+                            <div class="qr-sub">
+                                <a href="${fullUrl}" target="_blank" class="qr-link">${fullUrl}</a>
+                            </div>
                             <button class="copy-btn" onclick="copyToClipboard('${fullUrl}')">COPY LINK</button>
                         </div>
                     `;
