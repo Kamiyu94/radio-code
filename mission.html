@@ -20,7 +20,6 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            /* 使用工程字體 + 斜線零設定 */
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-variant-numeric: slashed-zero;
             margin: 0;
@@ -50,7 +49,7 @@
             outline: none;
             font-family: inherit;
             text-transform: uppercase;
-            user-select: text; /* 允許選取輸入框文字 */
+            user-select: text;
         }
 
         .btn {
@@ -90,10 +89,9 @@
 
         /* 4. Locked Screen */
         #screen-locked { background: #200000; border: 5px solid red; z-index: 20; }
-        .lock-icon { font-size: 5rem; color: red; margin-bottom: 20px; }
+        .lock-icon { font-size: 5rem; color: red; margin-bottom: 20px; cursor: pointer; }
         .lock-msg { color: red; font-size: 1.5rem; font-weight: bold; text-align: center; line-height: 1.5; }
-        .rescue-trigger { position: absolute; top: 20px; width: 100%; height: 60px; z-index: 30; /* 透明觸發區 */ }
-
+        
         /* 5. Success Screen */
         #screen-success { background: #001a00; z-index: 20; }
         .success-icon { font-size: 5rem; color: var(--highlight); margin-bottom: 20px; }
@@ -144,7 +142,7 @@
     </div>
 
     <div id="screen-locked" class="screen hidden">
-        <div class="rescue-trigger" id="lock-header"></div> <div class="lock-icon">❌</div>
+        <div class="lock-icon" onclick="unlockTap()">❌</div>
         <div class="lock-msg">
             SYSTEM LOCKED<br>
             CONNECTION TERMINATED<br><br>
@@ -170,28 +168,26 @@
 
     <script>
         // --- DATA CONFIGURATION ---
-        // 對應教官的 Master Codebook 答案
         const missions = {
             // Phase 1: Fruits
-            'loc_1': { i: '🍌', n: '香蕉', c: 'A3O7', cat: 'fruits' }, // A組去, 答案在B
-            'loc_2': { i: '🍎', n: '蘋果', c: 'X4T9', cat: 'fruits' }, // B組去, 答案在A
-            'loc_3': { i: '🥝', n: '奇異果', c: 'J6H2', cat: 'fruits' }, // C組去, 答案在D
-            'loc_4': { i: '🍓', n: '草莓', c: 'V1G5', cat: 'fruits' }, // D組去, 答案在C
+            'loc_1': { i: '🍌', n: '香蕉', c: 'A3O7', cat: 'fruits' }, 
+            'loc_2': { i: '🍎', n: '蘋果', c: 'X4T9', cat: 'fruits' }, 
+            'loc_3': { i: '🥝', n: '奇異果', c: 'J6H2', cat: 'fruits' }, 
+            'loc_4': { i: '🍓', n: '草莓', c: 'V1G5', cat: 'fruits' }, 
             
             // Phase 2: Animals
-            'loc_5': { i: '🐺', n: '狼', c: 'F6B2', cat: 'animals' }, // A組去, 答案在C
-            'loc_6': { i: '🦁', n: '獅子', c: 'C7M1', cat: 'animals' }, // C組去, 答案在A
-            'loc_7': { i: '🐻', n: '熊', c: 'R3Z5', cat: 'animals' }, // B組去, 答案在D
-            'loc_8': { i: '🐯', n: '老虎', c: 'Y5N8', cat: 'animals' }, // D組去, 答案在B
+            'loc_5': { i: '🐺', n: '狼', c: 'F6B2', cat: 'animals' }, 
+            'loc_6': { i: '🦁', n: '獅子', c: 'C7M1', cat: 'animals' }, 
+            'loc_7': { i: '🐻', n: '熊', c: 'R3Z5', cat: 'animals' }, 
+            'loc_8': { i: '🐯', n: '老虎', c: 'Y5N8', cat: 'animals' }, 
 
             // Phase 3: Plants (HQ Mission)
-            'hq_a': { i: '🍀', n: '幸運草', c: 'N9T4', cat: 'plants' }, // A解, 答案在D
-            'hq_b': { i: '🌷', n: '鬱金香', c: 'Q7U1', cat: 'plants' }, // B解, 答案在C
-            'hq_c': { i: '🌹', n: '玫瑰', c: 'M4X0', cat: 'plants' }, // C解, 答案在B
-            'hq_d': { i: '🌲', n: '松樹', c: 'J3R6', cat: 'plants' }  // D解, 答案在A
+            'hq_a': { i: '🍀', n: '幸運草', c: 'N9T4', cat: 'plants' }, 
+            'hq_b': { i: '🌷', n: '鬱金香', c: 'Q7U1', cat: 'plants' }, 
+            'hq_c': { i: '🌹', n: '玫瑰', c: 'M4X0', cat: 'plants' }, 
+            'hq_d': { i: '🌲', n: '松樹', c: 'J3R6', cat: 'plants' }  
         };
 
-        // 救援碼庫
         const rescueCodes = {
             'fruits':  ['7001', '7002', '7003', '7004', '7005'],
             'animals': ['8001', '8002', '8003', '8004', '8005'],
@@ -211,22 +207,18 @@
 
         // --- INITIALIZATION ---
         window.onload = function() {
-            // 1. Validate ID
             if (!missionId || !missions[missionId]) {
                 document.body.innerHTML = '<h1 style="color:red; padding:50px;">INVALID TERMINAL ID</h1>';
                 return;
             }
             missionData = missions[missionId];
 
-            // 2. Check Lock State
             if (isLocked) {
                 showScreen('screen-locked');
-                initLongPress();
             } else {
                 showScreen('screen-pin');
             }
 
-            // 3. Setup Operator UI
             if(lastOperator) {
                 const btn = document.getElementById(`op-${lastOperator}`);
                 if(btn) {
@@ -255,7 +247,6 @@
         }
 
         function selectOperator(opId) {
-            // Save operator for NEXT time
             localStorage.setItem('last_operator', opId);
             initMission();
         }
@@ -270,22 +261,17 @@
         function verifyCode() {
             const inputEl = document.getElementById('mission-input');
             let rawInput = inputEl.value.toUpperCase();
-            
-            // 1. 去除非英數字元
             let cleanInput = rawInput.replace(/[^A-Z0-9]/g, '');
             
-            // 2. 模糊比對：將 0 視為 O
+            // 0/O Fuzzy logic
             let fuzzyInput = cleanInput.replace(/0/g, 'O');
             let targetCode = missionData.c.replace(/0/g, 'O');
             
             if (fuzzyInput === targetCode) {
-                // Success
                 showScreen('screen-success');
-                // Clear lock state
                 localStorage.removeItem(`attempts_${missionId}`);
                 localStorage.removeItem(`locked_${missionId}`);
             } else {
-                // Fail
                 wrongAttempts++;
                 localStorage.setItem(`attempts_${missionId}`, wrongAttempts);
                 shakeElement(inputEl);
@@ -304,6 +290,8 @@
             if (wrongAttempts > 0) {
                 el.classList.remove('hidden');
                 el.innerText = `⚠ 密碼錯誤 (剩餘 ${3 - wrongAttempts} 次機會)`;
+            } else {
+                el.classList.add('hidden');
             }
         }
 
@@ -311,29 +299,24 @@
             isLocked = true;
             localStorage.setItem(`locked_${missionId}`, 'true');
             showScreen('screen-locked');
-            initLongPress();
         }
 
-        // --- RESCUE LOGIC ---
-        
-        let pressTimer;
+        // --- TAP TO UNLOCK LOGIC ---
+        let tapCount = 0;
+        let tapTimer;
 
-        function initLongPress() {
-            const target = document.getElementById('lock-header');
-            target.addEventListener('mousedown', startPress);
-            target.addEventListener('mouseup', cancelPress);
-            target.addEventListener('touchstart', startPress);
-            target.addEventListener('touchend', cancelPress);
-        }
-
-        function startPress() {
-            pressTimer = window.setTimeout(() => {
+        function unlockTap() {
+            tapCount++;
+            clearTimeout(tapTimer);
+            
+            if (tapCount >= 5) {
+                // Reset count and show modal
+                tapCount = 0;
                 document.getElementById('rescue-modal').classList.remove('hidden');
-            }, 2000); // 2 seconds
-        }
-
-        function cancelPress() {
-            clearTimeout(pressTimer);
+            }
+            
+            // Reset if user stops tapping for 1 second
+            tapTimer = setTimeout(() => { tapCount = 0; }, 1000);
         }
 
         function attemptRescue() {
@@ -350,10 +333,11 @@
                 return;
             }
 
-            // Unlock
+            // Unlock & Reset
             usedRescueCodes.push(code);
             localStorage.setItem('used_rescue', JSON.stringify(usedRescueCodes));
             
+            // !!! 關鍵修復：徹底重置錯誤計數 !!!
             wrongAttempts = 0;
             isLocked = false;
             localStorage.setItem(`attempts_${missionId}`, 0);
@@ -363,7 +347,7 @@
             document.getElementById('rescue-input').value = '';
             
             showScreen('screen-mission');
-            updateAttemptsUI();
+            updateAttemptsUI(); // This will now hide the warning because wrongAttempts is 0
         }
 
         // --- UTILS ---
