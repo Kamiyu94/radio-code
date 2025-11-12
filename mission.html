@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FIELD TERMINAL</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-main: #e0e0e0;
+            --highlight: #00ff41;
+            --danger: #ff3333;
+            --warning: #ffcc00;
+            --panel-bg: #111111;
+            --border: #333;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            /* 使用工程字體 + 斜線零設定 */
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-variant-numeric: slashed-zero;
+            margin: 0;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .hidden { display: none !important; }
+        .screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: #000; z-index: 1; }
+
+        /* --- UI Components --- */
+        h1, h2 { text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 20px; }
+        
+        .input-box {
+            background: #000;
+            border: 2px solid var(--highlight);
+            color: var(--highlight);
+            font-size: 2rem;
+            padding: 15px;
+            width: 100%;
+            max-width: 300px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            outline: none;
+            font-family: inherit;
+            text-transform: uppercase;
+            user-select: text; /* 允許選取輸入框文字 */
+        }
+
+        .btn {
+            background: var(--panel-bg);
+            border: 1px solid var(--highlight);
+            color: var(--highlight);
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+
+        .btn:active { background: var(--highlight); color: #000; transform: scale(0.98); }
+        .btn:disabled { border-color: #555; color: #555; cursor: not-allowed; pointer-events: none; }
+
+        /* --- Specific Screens --- */
+
+        /* 1. PIN Screen */
+        #screen-pin { z-index: 10; }
+        
+        /* 2. Operator Screen */
+        .op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 400px; }
+        .op-btn { height: 100px; border: 2px solid #444; border-radius: 10px; background: #1a1a1a; color: #fff; font-size: 1.2rem; }
+        .op-btn.disabled { opacity: 0.3; border-style: dashed; }
+        
+        /* 3. Mission Screen */
+        .target-icon { font-size: 6rem; margin-bottom: 10px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.05);} 100% {transform: scale(1);} }
+        .mission-hint { color: #888; font-size: 0.9rem; text-align: center; margin-bottom: 30px; max-width: 80%; }
+        .attempts-left { color: var(--danger); margin-top: 10px; font-size: 0.9rem; }
+
+        /* 4. Locked Screen */
+        #screen-locked { background: #200000; border: 5px solid red; z-index: 20; }
+        .lock-icon { font-size: 5rem; color: red; margin-bottom: 20px; }
+        .lock-msg { color: red; font-size: 1.5rem; font-weight: bold; text-align: center; line-height: 1.5; }
+        .rescue-trigger { position: absolute; top: 20px; width: 100%; height: 60px; z-index: 30; /* 透明觸發區 */ }
+
+        /* 5. Success Screen */
+        #screen-success { background: #001a00; z-index: 20; }
+        .success-icon { font-size: 5rem; color: var(--highlight); margin-bottom: 20px; }
+        .success-msg { color: var(--highlight); font-size: 1.5rem; font-weight: bold; text-align: center; }
+
+        /* Rescue Modal */
+        #rescue-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div id="screen-pin" class="screen">
+        <h2>TERMINAL ACCESS</h2>
+        <p style="color:#666; margin-bottom:20px;">SECURITY CLEARANCE REQUIRED</p>
+        <input type="number" id="pin-input" class="input-box" placeholder="PIN CODE">
+        <button class="btn" onclick="checkPin()">ENTER</button>
+    </div>
+
+    <div id="screen-operator" class="screen hidden">
+        <h2>IDENTIFY OPERATOR</h2>
+        <p style="color:#666; margin-bottom:20px;">WHO IS OPERATING?</p>
+        <div class="op-grid">
+            <button class="op-btn" id="op-1" onclick="selectOperator(1)">OP 1</button>
+            <button class="op-btn" id="op-2" onclick="selectOperator(2)">OP 2</button>
+            <button class="op-btn" id="op-3" onclick="selectOperator(3)">OP 3</button>
+            <button class="op-btn" id="op-4" onclick="selectOperator(4)">OP 4</button>
+        </div>
+        <p id="op-hint" style="color:var(--danger); font-size:0.8rem; margin-top:20px; opacity:0;">PREVIOUS OPERATOR FATIGUED</p>
+    </div>
+
+    <div id="screen-mission" class="screen hidden">
+        <div style="text-align:right; width:100%; padding:10px; color:#444; font-size:0.8rem;">SECURE CONNECTION</div>
+        
+        <div id="target-display" class="target-icon">❓</div>
+        <div id="target-name" style="font-size:1.5rem; font-weight:bold; margin-bottom:5px;">TARGET</div>
+        
+        <p class="mission-hint">向友軍單位索取解鎖代碼<br>REQUEST CODE FROM ALLY</p>
+        
+        <input type="text" id="mission-input" class="input-box" placeholder="CODE" maxlength="10">
+        <button class="btn" onclick="verifyCode()">VERIFY CODE</button>
+        
+        <div id="attempts-display" class="attempts-left hidden">⚠ 密碼錯誤 (剩餘 2 次機會)</div>
+    </div>
+
+    <div id="screen-locked" class="screen hidden">
+        <div class="rescue-trigger" id="lock-header"></div> <div class="lock-icon">❌</div>
+        <div class="lock-msg">
+            SYSTEM LOCKED<br>
+            CONNECTION TERMINATED<br><br>
+            PLEASE CONTACT HQ
+        </div>
+    </div>
+
+    <div id="screen-success" class="screen hidden">
+        <div class="success-icon">✅</div>
+        <div class="success-msg">
+            ACCESS GRANTED<br><br>
+            前往下一個地點<br>
+            PROCEED TO NEXT LOCATION
+        </div>
+    </div>
+
+    <div id="rescue-modal" class="hidden">
+        <h2 style="color:red;">OVERRIDE LOCK</h2>
+        <input type="number" id="rescue-input" class="input-box" placeholder="RESCUE PIN">
+        <button class="btn" style="border-color:red; color:red;" onclick="attemptRescue()">UNLOCK</button>
+        <button class="btn" style="border-color:#666; color:#666;" onclick="document.getElementById('rescue-modal').classList.add('hidden')">CANCEL</button>
+    </div>
+
+    <script>
+        // --- DATA CONFIGURATION ---
+        // 對應教官的 Master Codebook 答案
+        const missions = {
+            // Phase 1: Fruits
+            'loc_1': { i: '🍌', n: '香蕉', c: 'A3O7', cat: 'fruits' }, // A組去, 答案在B
+            'loc_2': { i: '🍎', n: '蘋果', c: 'X4T9', cat: 'fruits' }, // B組去, 答案在A
+            'loc_3': { i: '🥝', n: '奇異果', c: 'J6H2', cat: 'fruits' }, // C組去, 答案在D
+            'loc_4': { i: '🍓', n: '草莓', c: 'V1G5', cat: 'fruits' }, // D組去, 答案在C
+            
+            // Phase 2: Animals
+            'loc_5': { i: '🐺', n: '狼', c: 'F6B2', cat: 'animals' }, // A組去, 答案在C
+            'loc_6': { i: '🦁', n: '獅子', c: 'C7M1', cat: 'animals' }, // C組去, 答案在A
+            'loc_7': { i: '🐻', n: '熊', c: 'R3Z5', cat: 'animals' }, // B組去, 答案在D
+            'loc_8': { i: '🐯', n: '老虎', c: 'Y5N8', cat: 'animals' }, // D組去, 答案在B
+
+            // Phase 3: Plants (HQ Mission)
+            'hq_a': { i: '🍀', n: '幸運草', c: 'N9T4', cat: 'plants' }, // A解, 答案在D
+            'hq_b': { i: '🌷', n: '鬱金香', c: 'Q7U1', cat: 'plants' }, // B解, 答案在C
+            'hq_c': { i: '🌹', n: '玫瑰', c: 'M4X0', cat: 'plants' }, // C解, 答案在B
+            'hq_d': { i: '🌲', n: '松樹', c: 'J3R6', cat: 'plants' }  // D解, 答案在A
+        };
+
+        // 救援碼庫
+        const rescueCodes = {
+            'fruits':  ['7001', '7002', '7003', '7004', '7005'],
+            'animals': ['8001', '8002', '8003', '8004', '8005'],
+            'plants':  ['9001', '9002', '9003', '9004', '9005']
+        };
+
+        // --- STATE MANAGEMENT ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const missionId = urlParams.get('id');
+        let missionData = null;
+
+        // System State
+        let wrongAttempts = parseInt(localStorage.getItem(`attempts_${missionId}`)) || 0;
+        let isLocked = localStorage.getItem(`locked_${missionId}`) === 'true';
+        let usedRescueCodes = JSON.parse(localStorage.getItem('used_rescue')) || [];
+        let lastOperator = localStorage.getItem('last_operator');
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            // 1. Validate ID
+            if (!missionId || !missions[missionId]) {
+                document.body.innerHTML = '<h1 style="color:red; padding:50px;">INVALID TERMINAL ID</h1>';
+                return;
+            }
+            missionData = missions[missionId];
+
+            // 2. Check Lock State
+            if (isLocked) {
+                showScreen('screen-locked');
+                initLongPress();
+            } else {
+                showScreen('screen-pin');
+            }
+
+            // 3. Setup Operator UI
+            if(lastOperator) {
+                const btn = document.getElementById(`op-${lastOperator}`);
+                if(btn) {
+                    btn.classList.add('disabled');
+                    btn.disabled = true;
+                    document.getElementById('op-hint').style.opacity = 1;
+                }
+            }
+        };
+
+        // --- LOGIC FUNCTIONS ---
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function checkPin() {
+            const pin = document.getElementById('pin-input').value;
+            if (pin === '2758') {
+                showScreen('screen-operator');
+            } else {
+                shakeElement(document.getElementById('pin-input'));
+                document.getElementById('pin-input').value = '';
+            }
+        }
+
+        function selectOperator(opId) {
+            // Save operator for NEXT time
+            localStorage.setItem('last_operator', opId);
+            initMission();
+        }
+
+        function initMission() {
+            document.getElementById('target-display').innerText = missionData.i;
+            document.getElementById('target-name').innerText = missionData.n;
+            updateAttemptsUI();
+            showScreen('screen-mission');
+        }
+
+        function verifyCode() {
+            const inputEl = document.getElementById('mission-input');
+            let rawInput = inputEl.value.toUpperCase();
+            
+            // 1. 去除非英數字元
+            let cleanInput = rawInput.replace(/[^A-Z0-9]/g, '');
+            
+            // 2. 模糊比對：將 0 視為 O
+            let fuzzyInput = cleanInput.replace(/0/g, 'O');
+            let targetCode = missionData.c.replace(/0/g, 'O');
+            
+            if (fuzzyInput === targetCode) {
+                // Success
+                showScreen('screen-success');
+                // Clear lock state
+                localStorage.removeItem(`attempts_${missionId}`);
+                localStorage.removeItem(`locked_${missionId}`);
+            } else {
+                // Fail
+                wrongAttempts++;
+                localStorage.setItem(`attempts_${missionId}`, wrongAttempts);
+                shakeElement(inputEl);
+                inputEl.value = '';
+                
+                if (wrongAttempts >= 3) {
+                    lockSystem();
+                } else {
+                    updateAttemptsUI();
+                }
+            }
+        }
+
+        function updateAttemptsUI() {
+            const el = document.getElementById('attempts-display');
+            if (wrongAttempts > 0) {
+                el.classList.remove('hidden');
+                el.innerText = `⚠ 密碼錯誤 (剩餘 ${3 - wrongAttempts} 次機會)`;
+            }
+        }
+
+        function lockSystem() {
+            isLocked = true;
+            localStorage.setItem(`locked_${missionId}`, 'true');
+            showScreen('screen-locked');
+            initLongPress();
+        }
+
+        // --- RESCUE LOGIC ---
+        
+        let pressTimer;
+
+        function initLongPress() {
+            const target = document.getElementById('lock-header');
+            target.addEventListener('mousedown', startPress);
+            target.addEventListener('mouseup', cancelPress);
+            target.addEventListener('touchstart', startPress);
+            target.addEventListener('touchend', cancelPress);
+        }
+
+        function startPress() {
+            pressTimer = window.setTimeout(() => {
+                document.getElementById('rescue-modal').classList.remove('hidden');
+            }, 2000); // 2 seconds
+        }
+
+        function cancelPress() {
+            clearTimeout(pressTimer);
+        }
+
+        function attemptRescue() {
+            const code = document.getElementById('rescue-input').value;
+            const validCodes = rescueCodes[missionData.cat];
+
+            if (!validCodes.includes(code)) {
+                alert('無效的救援碼 (INVALID CODE)');
+                return;
+            }
+
+            if (usedRescueCodes.includes(code)) {
+                alert('此救援碼已失效 (CODE EXPIRED)');
+                return;
+            }
+
+            // Unlock
+            usedRescueCodes.push(code);
+            localStorage.setItem('used_rescue', JSON.stringify(usedRescueCodes));
+            
+            wrongAttempts = 0;
+            isLocked = false;
+            localStorage.setItem(`attempts_${missionId}`, 0);
+            localStorage.setItem(`locked_${missionId}`, 'false');
+            
+            document.getElementById('rescue-modal').classList.add('hidden');
+            document.getElementById('rescue-input').value = '';
+            
+            showScreen('screen-mission');
+            updateAttemptsUI();
+        }
+
+        // --- UTILS ---
+        function shakeElement(el) {
+            el.style.transform = 'translateX(10px)';
+            setTimeout(() => el.style.transform = 'translateX(-10px)', 50);
+            setTimeout(() => el.style.transform = 'translateX(10px)', 100);
+            setTimeout(() => el.style.transform = 'translateX(0)', 150);
+            el.style.borderColor = 'red';
+            setTimeout(() => el.style.borderColor = 'var(--highlight)', 500);
+        }
+
+    </script>
+</body>
+</html>
