@@ -31,7 +31,25 @@
         }
 
         .hidden { display: none !important; }
-        .screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: #000; z-index: 1; }
+        
+        /* 關鍵修正: 改為靠上對齊，並允許垂直捲動，避免鍵盤遮擋 */
+        .screen { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start; /* 內容靠上 */
+            padding: 20px; 
+            padding-top: 10vh; /* 頂部留空 */
+            width: 100%; 
+            height: 100%; 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            background: #000; 
+            z-index: 1; 
+            overflow-y: auto; /* 允許捲動 */
+        }
 
         /* --- UI Components --- */
         h1, h2 { text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 20px; }
@@ -67,6 +85,7 @@
             max-width: 300px;
             margin-bottom: 15px;
             transition: all 0.2s;
+            flex-shrink: 0; /* 確保按鈕不會被擠壓 */
         }
 
         .btn:active { background: var(--highlight); color: #000; transform: scale(0.98); }
@@ -79,12 +98,12 @@
         .mission-hint { color: #888; font-size: 0.9rem; text-align: center; margin-bottom: 30px; max-width: 80%; }
         .attempts-left { color: var(--danger); margin-top: 10px; font-size: 0.9rem; }
 
-        #screen-locked { background: #200000; border: 5px solid red; z-index: 20; }
+        #screen-locked { background: #200000; border: 5px solid red; z-index: 20; justify-content: center; padding-top: 20px; }
         .lock-icon { font-size: 5rem; color: red; margin-bottom: 20px; cursor: pointer; }
         .lock-msg { color: red; font-size: 1.5rem; font-weight: bold; text-align: center; line-height: 1.5; }
         
-        /* SUCCESS SCREEN (Dynamic) */
-        #screen-success { background: #001a00; z-index: 20; text-align: center; }
+        /* SUCCESS SCREEN */
+        #screen-success { background: #001a00; z-index: 20; text-align: center; padding-top: 5vh; }
         .success-icon { font-size: 5rem; color: var(--highlight); margin-bottom: 20px; }
         .success-title { color: var(--highlight); font-size: 1.5rem; font-weight: bold; margin-bottom: 20px; }
         
@@ -100,10 +119,9 @@
         .step-label { color: #888; font-size: 0.8rem; display: block; margin-bottom: 5px; }
         .step-val { color: #fff; font-size: 1.1rem; font-weight: bold; display: block; line-height: 1.4; }
         
-        /* 通訊指令特別樣式 */
         .comm-val { color: #ffcc00; font-size: 1rem; font-weight: bold; display: block; line-height: 1.4; white-space: pre-line; }
 
-        #screen-cooldown { background: #0a0a0a; z-index: 15; border-top: 5px solid var(--cool); }
+        #screen-cooldown { background: #0a0a0a; z-index: 15; border-top: 5px solid var(--cool); justify-content: center; padding-top: 20px; }
         .cool-icon { font-size: 5rem; margin-bottom: 20px; filter: grayscale(100%); opacity: 0.5; }
         .cool-msg { color: var(--cool); font-size: 1.2rem; font-weight: bold; text-align: center; margin-bottom: 40px; line-height: 1.5; }
         .reboot-btn { border-color: var(--cool); color: var(--cool); font-size: 1rem; padding: 10px; }
@@ -192,59 +210,45 @@
 
     <script>
         // --- DATA CONFIGURATION ---
-        // next: 下一站地點名稱
-        // comm: 該組員要做的通訊動作
         const missions = {
             // --- Phase 1: Fruits (Start) ---
-            // Alpha (Loc 1)
             'loc_1': { i: '🍌', n: '香蕉', c: 'A3O7', cat: 'fruits', 
                        next: '前往 LOC 5 (狼)', 
                        comm: '切換至 [主頻 CH2 / 備頻 CH6]。\n切換後，請呼叫該頻道的友軍單位。' }, 
-            // Bravo (Loc 2)
             'loc_2': { i: '🍎', n: '蘋果', c: 'X4T9', cat: 'fruits', 
                        next: '前往 LOC 7 (熊)', 
                        comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
-            // Charlie (Loc 3)
             'loc_3': { i: '🥝', n: '奇異果', c: 'J6H2', cat: 'fruits', 
                        next: '前往 LOC 6 (獅子)', 
                        comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
-            // Delta (Loc 4)
             'loc_4': { i: '🍓', n: '草莓', c: 'V1G5', cat: 'fruits', 
                        next: '前往 LOC 8 (老虎)', 
                        comm: '切換至 [主頻 CH3 / 備頻 CH7]。\n切換後，請呼叫該頻道的友軍單位。' }, 
             
             // --- Phase 2: Animals (Mid) ---
-            // Alpha (Loc 5)
             'loc_5': { i: '🐺', n: '狼', c: 'F6B2', cat: 'animals',
                        next: '前往 LOC 9 (幸運草)', 
                        comm: '切換至 [主頻 CH3 / 備頻 CH7]。\n切換後，請呼叫該頻道的友軍單位。' }, 
-            // Charlie (Loc 6)
             'loc_6': { i: '🦁', n: '獅子', c: 'C7M1', cat: 'animals',
-                       next: '前往 LOC 11 (鬱金香)', 
+                       next: '前往 LOC 11 (椰子樹)', 
                        comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
-            // Bravo (Loc 7)
             'loc_7': { i: '🐻', n: '熊', c: 'R3Z5', cat: 'animals',
-                       next: '前往 LOC 10 (玫瑰)', 
+                       next: '前往 LOC 10 (仙人掌)', 
                        comm: '切換至 [主頻 CH4 / 備頻 CH8]。\n切換後，請呼叫該頻道的友軍單位。' }, 
-            // Delta (Loc 8)
             'loc_8': { i: '🐯', n: '老虎', c: 'Y5N8', cat: 'animals',
                        next: '前往 LOC 12 (松樹)', 
                        comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
 
             // --- Phase 3: Plants (End) ---
-            // Loc 9 (was HQ_A)
             'hq_a': { i: '🍀', n: '幸運草', c: 'N9T4', cat: 'plants',
                       next: 'MISSION ACCOMPLISHED', 
                       comm: '通訊鏈路已重建。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
-            // Loc 11 (was HQ_B)
-            'hq_b': { i: '🌷', n: '鬱金香', c: 'Q7U1', cat: 'plants',
+            'hq_b': { i: '🌴', n: '椰子樹', c: 'C5Y9', cat: 'plants',
                       next: 'MISSION ACCOMPLISHED', 
                       comm: '通訊鏈路已重建。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
-            // Loc 10 (was HQ_C)
-            'hq_c': { i: '🌹', n: '玫瑰', c: 'M4X0', cat: 'plants',
+            'hq_c': { i: '🌵', n: '仙人掌', c: 'H5I0', cat: 'plants',
                       next: 'MISSION ACCOMPLISHED', 
                       comm: '通訊鏈路已重建。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
-            // Loc 12 (was HQ_D)
             'hq_d': { i: '🌲', n: '松樹', c: 'J3R6', cat: 'plants',
                       next: 'MISSION ACCOMPLISHED', 
                       comm: '通訊鏈路已重建。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }  
@@ -323,17 +327,14 @@
             let targetCode = missionData.c.replace(/0/g, 'O');
             
             if (fuzzyInput === targetCode) {
-                // SUCCESS LOGIC
                 localStorage.setItem('global_device_status', 'DISCHARGED');
                 localStorage.removeItem(`attempts_${missionId}`);
                 
-                // Update Success Screen Info
                 document.getElementById('success-next-loc').innerText = missionData.next;
                 document.getElementById('success-comm-msg').innerText = missionData.comm;
                 
                 showScreen('screen-success');
             } else {
-                // FAIL LOGIC
                 wrongAttempts++;
                 localStorage.setItem(`attempts_${missionId}`, wrongAttempts);
                 shakeElement(inputEl);
@@ -387,7 +388,6 @@
             usedRescueCodes.push(code);
             localStorage.setItem('used_rescue', JSON.stringify(usedRescueCodes));
             
-            // Reset Status
             wrongAttempts = 0;
             localStorage.setItem(`attempts_${missionId}`, 0);
             localStorage.setItem('global_device_status', 'FRESH');
