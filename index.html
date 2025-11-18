@@ -52,10 +52,7 @@
             font-weight: bold;
         }
 
-        input {
-            font-family: inherit;
-            user-select: text;
-        }
+        input { font-family: inherit; user-select: text; }
         
         /* --- SCREEN 1: TEAM SELECT (HOME) --- */
         #screen-team-select {
@@ -171,8 +168,6 @@
         .qr-img { width: 100px; height: 100px; background: #fff; margin-right: 15px; border-radius: 4px; }
         .qr-info { flex: 1; overflow: hidden; }
         .qr-desc { color: #fff; font-size: 1rem; font-weight: bold; margin-bottom: 5px; }
-        
-        /* 讓連結可點擊且有樣式 */
         .qr-sub { color: #888; font-size: 0.8rem; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
         .qr-link { color: var(--highlight); text-decoration: underline; cursor: pointer; }
         
@@ -244,8 +239,14 @@
             <div style="color:#666; font-size:0.8rem; margin-bottom:20px; text-align:center;">
                 BASE URL: https://kamiyu94.github.io/radio-code/mission.html
             </div>
-            <div id="qr-list">
-                </div>
+            <div id="qr-list"></div>
+            
+            <div style="margin-top: 40px; border-top: 1px solid #333; padding-top: 20px; text-align: center;">
+                <p style="color: #666; font-size: 0.8rem; margin-bottom: 10px;">DEBUG ZONE (本機測試用)</p>
+                <button class="action-btn" style="border-color: var(--color-alpha); color: var(--color-alpha); width: 100%;" onclick="resetLocalData()">
+                    ⚠ RESET DEVICE DATA
+                </button>
+            </div>
         </div>
     </div>
 
@@ -371,10 +372,10 @@
                 { id: 'loc_8', desc: '8. D組地點 (看老虎/Bravo給)', icon: '🐯' }
             ]},
             { title: "PHASE 3: PLANTS (Rescue: 9xxx)", points: [
-                { id: 'hq_a', desc: 'HQ-A組 (看幸運草/Delta給)', icon: '🍀' },
-                { id: 'hq_b', desc: 'HQ-B組 (看鬱金香/Charlie給)', icon: '🌷' },
-                { id: 'hq_c', desc: 'HQ-C組 (看玫瑰/Bravo給)', icon: '🌹' },
-                { id: 'hq_d', desc: 'HQ-D組 (看松樹/Alpha給)', icon: '🌲' }
+                { id: 'hq_a', desc: 'Loc 9: A組 (看幸運草/Delta給)', icon: '🍀' },
+                { id: 'hq_b', desc: 'Loc 11: B組 (看鬱金香/Charlie給)', icon: '🌷' },
+                { id: 'hq_c', desc: 'Loc 10: C組 (看玫瑰/Bravo給)', icon: '🌹' },
+                { id: 'hq_d', desc: 'Loc 12: D組 (看松樹/Alpha給)', icon: '🌲' }
             ]}
         ];
 
@@ -403,7 +404,6 @@
                     
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'qr-item';
-                    // Added clickable link
                     itemDiv.innerHTML = `
                         <img src="${qrSrc}" class="qr-img" alt="QR">
                         <div class="qr-info">
@@ -427,6 +427,15 @@
             }).catch(err => {
                 console.error('Copy failed', err);
             });
+        }
+
+        // --- REBOOT LOCAL DATA ---
+        function resetLocalData() {
+            if(confirm('注意：這只會清除「這台手機」上的任務進度。\n(學員的手機必須在他們那邊輸入 8964 重置)\n\n確定要清除嗎？')) {
+                localStorage.clear();
+                alert('DEVICE DATA CLEARED!');
+                location.reload();
+            }
         }
 
     </script>
