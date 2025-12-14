@@ -24,7 +24,7 @@
             overflow: hidden;
         }
 
-        /* 掃描線特效 */
+        /* 復古掃描線特效 */
         body::before {
             content: " ";
             display: block;
@@ -78,6 +78,7 @@
             margin-top: 20px;
             text-align: center;
             z-index: 3;
+            min-height: 60px; /* 預留高度給按鈕 */
         }
 
         .btn {
@@ -95,6 +96,8 @@
             position: relative;
             overflow: hidden;
             opacity: 0; /* 初始隱藏 */
+            width: 100%;
+            max-width: 300px;
         }
 
         .btn:hover { background: var(--text-main); color: #000; box-shadow: 0 0 20px var(--text-main); }
@@ -107,7 +110,7 @@
         .stamp {
             position: absolute;
             top: 50%; left: 50%;
-            transform: translate(-50%, -50%) rotate(-15deg) scale(2);
+            transform: translate(-50%, -50%) rotate(-15deg) scale(3);
             border: 5px solid var(--alert);
             color: var(--alert);
             font-size: 3rem;
@@ -116,11 +119,12 @@
             text-transform: uppercase;
             opacity: 0;
             pointer-events: none;
-            z-index: 1;
+            z-index: 100;
             mix-blend-mode: screen;
-            transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(0,0,0,0.5); /* 增加一點底色讓字更清楚 */
         }
-        .stamp.stamped { opacity: 0.3; transform: translate(-50%, -50%) rotate(-15deg) scale(1); }
+        .stamp.stamped { opacity: 1; transform: translate(-50%, -50%) rotate(-15deg) scale(1); }
 
     </style>
 </head>
@@ -135,17 +139,23 @@
         </div>
 
     <div class="footer">
-        <button class="btn" id="start-btn" onclick="startMission()">接受任務 / ACCEPT</button>
+        <button class="btn" id="start-btn" onclick="acceptMission()">接受任務 / ACCEPT</button>
     </div>
 
     <div class="stamp" id="secret-stamp">TOP SECRET</div>
 
     <script>
-        // 設定今天的日期
+        // 1. 設定日期
         const now = new Date();
         document.getElementById('current-date').innerText = now.getFullYear() + '.' + (now.getMonth()+1).toString().padStart(2,'0') + '.' + now.getDate().toString().padStart(2,'0');
 
-        // 劇本內容 (可在此修改文案)
+        // 2. 判斷要進入哪個版本的任務 (讀取 URL 參數 ?next=...)
+        // 如果是從 index.html 按綠色按鈕進來，通常會帶參數
+        // 預設走 V2 (Online)
+        const urlParams = new URLSearchParams(window.location.search);
+        const nextVersion = urlParams.get('next') || 'v2'; 
+
+        // 3. 劇本內容 (拓樸行動)
         const storyLines = [
             "正在建立安全連線... [SECURE CONNECTION ESTABLISHED]",
             "身份驗證通過。通訊官，歡迎歸隊。",
@@ -173,32 +183,31 @@
         const stamp = document.getElementById('secret-stamp');
         let lineIndex = 0;
 
-        // 打字機效果函式
+        // 4. 打字機效果
         function typeWriter() {
             if (lineIndex < storyLines.length) {
                 const p = document.createElement('div');
                 p.className = 'line';
-                p.innerHTML = storyLines[lineIndex]; // 使用 innerHTML 讓 span 標籤生效
+                p.innerHTML = storyLines[lineIndex];
                 contentBox.appendChild(p);
                 
-                // 觸發淡入動畫
+                // 淡入
                 setTimeout(() => { p.classList.add('visible'); }, 50);
                 
-                // 自動捲動到底部
+                // 捲動到底部
                 contentBox.scrollTop = contentBox.scrollHeight;
 
                 lineIndex++;
-                // 控制打字速度 (隨機一點比較像傳輸)
-                const delay = Math.random() * 500 + 300; 
+                // 隨機打字速度
+                const delay = Math.random() * 300 + 100; 
                 setTimeout(typeWriter, delay);
             } else {
-                // 文字跑完後
                 finishAnimation();
             }
         }
 
         function finishAnimation() {
-            // 加上游標
+            // 加入游標
             const cursor = document.createElement('span');
             cursor.className = 'cursor';
             contentBox.lastChild.appendChild(cursor);
@@ -213,23 +222,24 @@
             }, 500);
         }
 
-        function startMission() {
-            // 點擊後跳轉到 mission.html (不帶 ID，進入選單模式)
-            // 或是帶入預設 ID，看您的需求
-            
-            // 這裡做一個簡單的過場音效感
+        // 5. 按鈕點擊邏輯
+        function acceptMission() {
             startBtn.innerText = "ACCESSING...";
             startBtn.style.background = "#00ff41";
             startBtn.style.color = "#000";
             
             setTimeout(() => {
-                // 跳轉到 mission.html (因為我們修好了選單功能，這裡不需要 ?id=...)
-                window.location.href = 'mission.html'; 
+                // 根據參數導向正確的頁面
+                if (nextVersion === 'v1') {
+                    window.location.href = 'mission.html'; // 離線版
+                } else {
+                    window.location.href = 'mission_v2.html'; // 線上版 (預設)
+                }
             }, 1000);
         }
 
-        // 啟動
-        setTimeout(typeWriter, 1000);
+        // 啟動程式
+        setTimeout(typeWriter, 500);
 
     </script>
 </body>
