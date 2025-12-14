@@ -95,7 +95,7 @@
     <script>
         const SUPABASE_URL = 'https://lqhgpeuoejdyodanvauv.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxaGdwZXVvZWpkeW9kYW52YXV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDUyMzAsImV4cCI6MjA3OTA4MTIzMH0.my3U8mN06xm79ArFamTpWydf7rYFXOKT5-ooKmqb_O4';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const urlParams = new URLSearchParams(window.location.search);
         const missionId = urlParams.get('id'); // e.g., 'loc_1'
