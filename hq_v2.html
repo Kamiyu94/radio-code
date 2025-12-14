@@ -377,107 +377,129 @@
             document.getElementById('qrModal').style.display = 'none';
         }
 
-        // --- 5. PRINT FUNCTION (A4 四合一裁切版) ---
+        // --- 5. PRINT FUNCTION (A4 四合一：七列四欄精準版) ---
         function generateCodeBook() {
-            // 1. 準備圖示對照表 (為了把文字轉回 emoji)
+            // 1. 準備圖示對照表
             const iconMap = {};
-            // 遍歷 MASTER_ASSETS 將 {n:'蘋果', i:'🍎'} 轉為 iconMap['蘋果'] = '🍎'
             Object.values(MASTER_ASSETS).forEach(category => {
                 category.forEach(item => {
                     iconMap[item.n] = item.i;
                 });
             });
 
-            // 2. 設定列印樣式：四合一 (Quarter Page) + 雙欄位
-            let html = `<html><head><title>MISSION CODE BOOKS (COMPACT)</title><style>
-                @page { size: A4; margin: 5mm; } /* 設定為 A4，邊界留白 5mm */
+            // 2. 設定列印樣式
+            let html = `<html><head><title>MISSION CODE BOOKS (GRID VIEW)</title><style>
+                /* 強制歸零頁面邊距，由 CSS 控制排版 */
+                @page { size: A4; margin: 0; }
+                
                 body { 
-                    font-family: "Microsoft JhengHei", sans-serif; 
+                    font-family: "Microsoft JhengHei", "Heiti TC", sans-serif; 
                     -webkit-print-color-adjust: exact; 
-                    margin: 0; padding: 0; 
-                    height: 100vh; /* 填滿整頁 */
+                    margin: 0; padding: 10mm; /* 四周留白 1cm 方便印表機夾紙 */
+                    height: 100vh; 
+                    box-sizing: border-box;
                     display: flex; 
-                    flex-wrap: wrap; /* 允許換行 */
-                    justify-content: center;
-                    align-content: center;
+                    flex-wrap: wrap; 
+                    justify-content: space-between;
+                    align-content: space-between;
                 }
                 
-                /* 每一格佔頁面的 50% 寬高 (扣除一點邊距避免溢出) */
+                /* 每一格精準佔據一半扣除間隙 */
                 .quarter-page { 
-                    width: 48%; 
-                    height: 48%; 
-                    margin: 0.5%;
-                    border: 2px dashed #999; /* 裁切線 */
+                    width: calc(50% - 2mm); 
+                    height: calc(50% - 2mm); 
+                    border: 1px dashed #999; /* 裁切線改細一點比較準 */
                     box-sizing: border-box; 
-                    padding: 10px;
+                    padding: 8px;
                     position: relative;
                     display: flex;
                     flex-direction: column;
-                    border-radius: 10px;
+                    border-radius: 8px;
+                    overflow: hidden; /* 防止內容溢出 */
                 }
 
                 .header-section {
-                    text-align: center;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
                     border-bottom: 2px solid #000;
-                    margin-bottom: 5px;
-                    padding-bottom: 5px;
+                    padding-bottom: 4px;
+                    margin-bottom: 4px;
+                    height: 35px; /* 固定標頭高度 */
                 }
 
                 .team-name { 
-                    font-size: 1.4rem; font-weight: 900; color: #fff; 
-                    padding: 4px 15px; border-radius: 20px; 
-                    display: inline-block;
-                    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+                    font-size: 1.2rem; font-weight: 900; color: #fff; 
+                    padding: 2px 12px; border-radius: 4px; 
+                    text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
                 }
                 
                 .warning { 
-                    font-size: 0.7rem; color: red; font-weight: bold; margin-top: 2px;
+                    font-size: 0.6rem; color: #666; font-weight: bold;
+                    text-align: right; line-height: 1.1;
                 }
 
-                /* 內容區塊使用雙欄位，才能塞進 A6 大小 */
+                /* 網格容器：4欄 x 7列 */
                 .grid-container { 
                     display: grid; 
-                    grid-template-columns: 1fr 1fr; /* 左右兩欄 */
-                    column-gap: 15px; /* 欄間距 */
-                    row-gap: 2px;     /* 行間距 */
-                    font-size: 0.85rem; 
-                    flex: 1;
+                    grid-template-columns: repeat(4, 1fr); /* 4 欄 */
+                    grid-template-rows: repeat(7, 1fr);    /* 7 列 */
+                    gap: 2px;
+                    flex: 1; /* 填滿剩餘高度 */
                 }
 
+                /* 單個物品卡片 */
                 .item { 
-                    border-bottom: 1px dotted #ccc; 
+                    border: 1px solid #ddd; 
+                    border-radius: 4px;
                     display: flex; 
-                    justify-content: space-between; 
+                    flex-direction: column; 
+                    justify-content: center; 
                     align-items: center; 
-                    padding: 1px 0;
+                    text-align: center;
+                    background: rgba(255,255,255,0.8);
                 }
                 
-                .icon { font-size: 1rem; margin-right: 4px; }
-                .name { font-weight: bold; font-size: 0.8rem; }
-                .code { font-family: 'Consolas', monospace; font-weight: 900; font-size: 0.9rem; letter-spacing: 0px;}
+                .item-top { font-size: 0.75rem; line-height: 1; margin-bottom: 2px; white-space: nowrap; }
+                .item-icon { font-size: 0.9rem; margin-right: 2px; }
+                .item-name { font-weight: bold; }
                 
-                /* 背景浮水印 */
+                .item-code { 
+                    font-family: 'Consolas', monospace; 
+                    font-weight: 900; 
+                    font-size: 1rem; 
+                    color: #000;
+                    line-height: 1;
+                    letter-spacing: -0.5px; /* 稍微擠一點讓4碼更好看 */
+                }
+                
+                /* 讓 A/B/C/D 的浮水印顏色淡一點 */
                 .watermark {
                     position: absolute; top: 55%; left: 50%; 
-                    transform: translate(-50%, -50%) rotate(-30deg);
-                    font-size: 4rem; opacity: 0.06; 
+                    transform: translate(-50%, -50%) rotate(0deg);
+                    font-size: 8rem; opacity: 0.04; 
                     font-weight: 900; pointer-events: none; 
-                    white-space: nowrap; z-index: 0;
-                    color: #000;
+                    z-index: 0; color: #000;
                 }
 
                 .footer {
-                    font-size: 0.6rem; text-align: center; margin-top: 5px; color: #666;
+                    font-size: 0.5rem; text-align: center; margin-top: 4px; color: #aaa; height: 10px;
                 }
+
+                /* 針對不同小隊的邊框微調 (可選) */
+                .quarter-page[data-team="A"] { border-color: #ffcccc; }
+                .quarter-page[data-team="B"] { border-color: #ccffcc; }
+                .quarter-page[data-team="C"] { border-color: #ccccff; }
+                .quarter-page[data-team="D"] { border-color: #ffffcc; }
             </style></head><body>`;
 
             // 3. 定義四個小隊
             const teams = ['A', 'B', 'C', 'D'];
             const teamInfo = {
-                'A': { name: 'ALPHA (A)', color: '#CC0000' },
-                'B': { name: 'BRAVO (B)', color: '#009900' },
-                'C': { name: 'CHARLIE (C)', color: '#0033CC' },
-                'D': { name: 'DELTA (D)', color: '#CCAA00' }
+                'A': { name: 'ALPHA', color: '#CC0000' },
+                'B': { name: 'BRAVO', color: '#009900' },
+                'C': { name: 'CHARLIE', color: '#0033CC' },
+                'D': { name: 'DELTA', color: '#CCAA00' }
             };
 
             // 4. 生成四個區塊
@@ -487,32 +509,32 @@
                 const info = teamInfo[team];
 
                 html += `
-                <div class="quarter-page">
-                    <div class="watermark">${info.name}</div>
+                <div class="quarter-page" data-team="${team}">
+                    <div class="watermark">${team}</div>
                     
                     <div class="header-section">
                         <div class="team-name" style="background:${info.color}">${info.name}</div>
-                        <div class="warning">⚠️ 機密通訊代碼本 ⚠️</div>
+                        <div class="warning">CONFIDENTIAL<br>EYES ONLY</div>
                     </div>
                     
                     <div class="grid-container">`;
                 
-                // 列印物品 (加上圖示)
+                // 列印物品 (Grid View)
                 Object.keys(bookData).sort().forEach(itemName => {
-                    const icon = iconMap[itemName] || '📦'; // 查表找圖示，找不到就用盒子代替
+                    const icon = iconMap[itemName] || ''; 
                     html += `
                     <div class="item">
-                        <div>
-                            <span class="icon">${icon}</span>
-                            <span class="name">${itemName}</span>
+                        <div class="item-top">
+                            <span class="item-icon">${icon}</span>
+                            <span class="item-name">${itemName}</span>
                         </div>
-                        <span class="code">${bookData[itemName]}</span>
+                        <div class="item-code">${bookData[itemName]}</div>
                     </div>`;
                 });
 
                 html += `
                     </div>
-                    <div class="footer">CITY GUARDIAN - CUT HERE ✂️</div>
+                    <div class="footer">CITY GUARDIAN TACTICAL - ${info.name} SQUAD</div>
                 </div>`;
             });
 
