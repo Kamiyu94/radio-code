@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>URBAN WATCHERS :: SYSTEM SELECT</title>
+    <title>CITY GUARDIAN :: SYSTEM SELECT</title>
     <style>
         :root {
             --bg-color: #050505;
@@ -27,8 +27,29 @@
 
         .container {
             width: 100%;
-            max-width: 450px;
+            max-width: 450px; /* 手機版預設寬度 */
             text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        /* --- 針對電腦版 (寬度大於 768px) 的優化 --- */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 800px; /* 電腦版變寬 */
+            }
+            h1 { font-size: 3rem !important; margin-bottom: 10px !important;} /* 標題變大 */
+            .subtitle { font-size: 1.2rem !important; margin-bottom: 50px !important;}
+            
+            .system-block { 
+                padding: 30px !important; 
+                margin-bottom: 30px !important;
+            }
+            .sys-title { font-size: 1.5rem !important; margin-bottom: 20px !important; }
+            .btn { 
+                padding: 20px !important; 
+                font-size: 1.2rem !important; 
+            }
+            .intro-btn { font-size: 1.2rem !important; padding: 20px !important; }
         }
 
         h1 { margin: 0 0 5px 0; font-size: 1.5rem; letter-spacing: 2px; }
@@ -88,7 +109,7 @@
 <body>
 
     <div class="container">
-        <h1>URBAN WATCHERS</h1>
+        <h1>CITY GUARDIAN</h1>
         <div class="subtitle">TACTICAL OPERATION SYSTEMS</div>
 
         <a href="briefing.html" class="intro-btn">
