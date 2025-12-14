@@ -211,24 +211,26 @@
             const shuffledAnimals = shuffle([...MASTER_ASSETS.animals]);
             const shuffledPlants = shuffle([...MASTER_ASSETS.plants]);
 
+            // ★ 更新：詳細的任務指引
             const missions = [
-                // Phase 1 (Fruits)
-                { id: 'loc_1', cat: 'fruits', hint: '前往 LOC 5', comm: '呼叫 B 小隊(CH2)', target_book: 'B' }, 
-                { id: 'loc_2', cat: 'fruits', hint: '前往 LOC 7', comm: '呼叫 A 小隊(CH1)', target_book: 'A' }, 
-                { id: 'loc_3', cat: 'fruits', hint: '前往 LOC 6', comm: '呼叫 D 小隊(CH4)', target_book: 'D' }, 
-                { id: 'loc_4', cat: 'fruits', hint: '前往 LOC 8', comm: '呼叫 C 小隊(CH3)', target_book: 'C' }, 
-                // Phase 2 (Animals)
-                { id: 'loc_5', cat: 'animals', hint: '前往 LOC 9',  comm: '呼叫 C 小隊(CH3)', target_book: 'C' },
-                { id: 'loc_6', cat: 'animals', hint: '前往 LOC 11', comm: '呼叫 D 小隊(CH4)', target_book: 'D' },
-                { id: 'loc_7', cat: 'animals', hint: '前往 LOC 10', comm: '呼叫 A 小隊(CH1)', target_book: 'A' },
-                { id: 'loc_8', cat: 'animals', hint: '前往 LOC 12', comm: '呼叫 B 小隊(CH2)', target_book: 'B' },
-                // Phase 3 (Plants)
-                { id: 'loc_9',  cat: 'plants', hint: 'MISSION COMPLETE', comm: '回報 HQ', target_book: 'B' },
-                { id: 'loc_10', cat: 'plants', hint: 'MISSION COMPLETE', comm: '回報 HQ', target_book: 'A' },
-                { id: 'loc_11', cat: 'plants', hint: 'MISSION COMPLETE', comm: '回報 HQ', target_book: 'D' },
-                { id: 'loc_12', cat: 'plants', hint: 'MISSION COMPLETE', comm: '回報 HQ', target_book: 'C' }
+                // Phase 1: Fruits
+                { id: 'loc_1', cat: 'fruits', hint: '前往 LOC 5', comm: '切換至 [主頻 CH1 / 備頻 CH3]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'B' }, 
+                { id: 'loc_2', cat: 'fruits', hint: '前往 LOC 7', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。', target_book: 'A' }, 
+                { id: 'loc_3', cat: 'fruits', hint: '前往 LOC 6', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。', target_book: 'D' }, 
+                { id: 'loc_4', cat: 'fruits', hint: '前往 LOC 8', comm: '切換至 [主頻 CH2 / 備頻 CH4]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'C' }, 
+                
+                // Phase 2: Animals
+                { id: 'loc_5', cat: 'animals', hint: '前往 LOC 9', comm: '切換至 [主頻 CH1 / 備頻 CH3]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'C' }, 
+                { id: 'loc_6', cat: 'animals', hint: '前往 LOC 11', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。', target_book: 'D' }, 
+                { id: 'loc_7', cat: 'animals', hint: '前往 LOC 10', comm: '切換至 [主頻 CH2 / 備頻 CH4]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'A' }, 
+                { id: 'loc_8', cat: 'animals', hint: '前往 LOC 12', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。', target_book: 'B' }, 
+                
+                // Phase 3: Plants
+                { id: 'loc_9',  cat: 'plants', hint: 'MISSION COMPLETE', comm: '切換至 [救援頻道] 回報 HQ。', target_book: 'B' },
+                { id: 'loc_10', cat: 'plants', hint: 'MISSION COMPLETE', comm: '切換至 [救援頻道] 回報 HQ。', target_book: 'A' },
+                { id: 'loc_11', cat: 'plants', hint: 'MISSION COMPLETE', comm: '切換至 [救援頻道] 回報 HQ。', target_book: 'D' },
+                { id: 'loc_12', cat: 'plants', hint: 'MISSION COMPLETE', comm: '切換至 [救援頻道] 回報 HQ。', target_book: 'C' }
             ];
-
             const payload = missions.map((m, idx) => {
                 let asset;
                 if(m.cat === 'fruits') asset = shuffledFruits.pop();
