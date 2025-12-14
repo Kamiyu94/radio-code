@@ -3,273 +3,303 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FIELD TERMINAL (ONLINE)</title>
+    <title>FIELD TERMINAL V2 (ONLINE)</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        /* (保留原本的 CSS 樣式，只修改與連線相關的部分) */
-        :root { --bg-color: #000000; --text-main: #e0e0e0; --highlight: #00ff41; --danger: #ff3333; --warning: #ffcc00; --cool: #00ffff; --panel-bg: #111111; }
+        :root {
+            --bg-color: #000000;
+            --text-main: #e0e0e0;
+            --highlight: #00ff41; /* V2 招牌綠 */
+            --danger: #ff3333;
+            --panel-bg: #111111;
+        }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
-        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Consolas', 'Monaco', monospace; margin: 0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-        .hidden { display: none !important; }
-        .screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 20px; padding-top: 10vh; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: #000; z-index: 1; overflow-y: auto; }
-        h1, h2 { text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 20px; }
-        .input-box { background: #000; border: 2px solid var(--highlight); color: var(--highlight); font-size: 2rem; padding: 15px; width: 100%; max-width: 300px; text-align: center; border-radius: 8px; margin-bottom: 20px; outline: none; font-family: inherit; text-transform: uppercase; user-select: text; }
-        .btn { background: var(--panel-bg); border: 1px solid var(--highlight); color: var(--highlight); padding: 15px 30px; font-size: 1.2rem; border-radius: 8px; cursor: pointer; text-transform: uppercase; font-weight: bold; width: 100%; max-width: 300px; margin-bottom: 15px; flex-shrink: 0; }
-        .btn:active { background: var(--highlight); color: #000; transform: scale(0.98); }
-        .target-icon { font-size: 6rem; margin-bottom: 10px; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.05);} 100% {transform: scale(1);} }
-        .mission-hint { color: #888; font-size: 0.9rem; text-align: center; margin-bottom: 30px; max-width: 80%; }
-        .attempts-left { color: var(--danger); margin-top: 10px; font-size: 0.9rem; }
-        #screen-locked { background: #200000; border: 5px solid red; z-index: 20; justify-content: center; padding-top: 20px; }
-        .lock-icon { font-size: 5rem; color: red; margin-bottom: 20px; cursor: pointer; }
-        #screen-success { background: #001a00; z-index: 20; text-align: center; padding-top: 5vh; }
-        .success-icon { font-size: 5rem; color: var(--highlight); margin-bottom: 20px; }
-        .next-step-box { border: 1px dashed var(--highlight); padding: 15px; border-radius: 8px; background: rgba(0, 255, 65, 0.1); margin-bottom: 10px; width: 100%; max-width: 320px; }
-        .step-label { color: #888; font-size: 0.8rem; display: block; margin-bottom: 5px; }
-        .step-val { color: #fff; font-size: 1.1rem; font-weight: bold; display: block; line-height: 1.4; }
-        .comm-val { color: #ffcc00; font-size: 1rem; font-weight: bold; display: block; line-height: 1.4; white-space: pre-line; }
         
-        /* Loading Spinner */
-        .spinner { border: 4px solid #333; border-top: 4px solid var(--highlight); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Consolas', 'Monaco', monospace;
+            margin: 0;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .hidden { display: none !important; }
+
+        /* --- 1. 小隊選擇選單 --- */
+        #team-selector {
+            height: 100%; width: 100%;
+            display: flex; flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .menu-title { text-align: center; color: var(--highlight); margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px;}
+        
+        .team-btn {
+            width: 100%; padding: 25px; margin-bottom: 15px;
+            font-size: 1.5rem; font-weight: bold; border-radius: 10px;
+            background: #111; color: #fff; border: 2px solid #333;
+            text-align: left; position: relative; cursor: pointer;
+            transition: 0.2s;
+        }
+        .team-btn:active { transform: scale(0.98); filter: brightness(1.2); }
+        .team-btn::after { content: '>'; position: absolute; right: 20px; opacity: 0.5; }
+
+        /* --- 2. 任務主介面 --- */
+        #app { height: 100%; width: 100%; position: relative; }
+
+        .screen { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            padding: 20px; padding-top: 10vh;
+            background: #000; z-index: 10;
+        }
+
+        .input-box {
+            background: #000; border: 2px solid var(--highlight); color: var(--highlight);
+            font-size: 2rem; padding: 15px; width: 100%; max-width: 300px;
+            text-align: center; border-radius: 8px; margin-bottom: 20px; outline: none;
+            font-family: inherit; text-transform: uppercase;
+        }
+
+        .btn {
+            background: #222; border: 1px solid var(--highlight); color: var(--highlight);
+            padding: 15px 30px; font-size: 1.2rem; border-radius: 8px; cursor: pointer;
+            width: 100%; max-width: 300px; font-weight: bold;
+        }
+        .btn:active { background: var(--highlight); color: #000; }
+
+        /* 狀態畫面 */
+        .status-icon { font-size: 5rem; margin-bottom: 20px; }
+        .info-text { font-size: 1.2rem; color: #fff; margin-bottom: 10px; font-weight: bold; }
+        .comm-msg { color: #ffcc00; white-space: pre-line; text-align: center; margin-top: 20px; border: 1px dashed #444; padding: 15px; width: 100%; }
+
+        /* Loading Overlay - 這是最重要的部分 */
+        #loading {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 99;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--highlight);
+        }
+        .loading-retry { margin-top: 20px; color: #fff; border: 1px solid #666; padding: 5px 15px; font-size: 0.8rem; cursor: pointer; display: none;}
     </style>
 </head>
 <body>
-    <div id="team-selector" style="display:none; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:20px;">
-        <h1 style="color:var(--highlight); margin-bottom:30px;">SELECT YOUR SQUAD</h1>
-    
-        <button class="btn" onclick="selectTeam('loc_1')" style="margin-bottom:15px; border-color:#ff3333; color:#ff3333;">🔴 ALPHA TEAM (A小隊)</button>
-        <button class="btn" onclick="selectTeam('loc_2')" style="margin-bottom:15px; border-color:#33ff33; color:#33ff33;">🟢 BRAVO TEAM (B小隊)</button>
-        <button class="btn" onclick="selectTeam('loc_3')" style="margin-bottom:15px; border-color:#3388ff; color:#3388ff;">🔵 CHARLIE TEAM (C小隊)</button>
-        <button class="btn" onclick="selectTeam('loc_4')" style="margin-bottom:15px; border-color:#ffff33; color:#ffff33;">🟡 DELTA TEAM (D小隊)</button>
-    
-        <div style="margin-top:20px; color:#666; font-size:0.8rem;">或是請掃描任務地點 QR Code</div>
+
+    <div id="loading">
+        <div id="loading-text">CONNECTING TO SATELLITE...</div>
+        <div class="loading-retry" onclick="location.reload()">RETRY CONNECTION</div>
     </div>
 
-<div id="app" style="display:none; width:100%; max-width:600px; margin:0 auto;">
-    </div>
-    <div id="screen-loading" class="screen" style="justify-content:center; z-index:100;">
-        <div class="spinner"></div>
-        <div style="color:#666;">ESTABLISHING UPLINK...</div>
-    </div>
-
-    <div id="screen-error" class="screen hidden" style="justify-content:center; z-index:100;">
-        <h2 style="color:red;">CONNECTION FAILED</h2>
-        <p id="error-msg" style="color:#888; text-align:center;">NO ACTIVE MISSION FOUND</p>
-        <button class="btn" onclick="location.reload()">RETRY</button>
-    </div>
-
-    <div id="screen-pin" class="screen hidden">
-        <h2>TERMINAL ACCESS</h2>
-        <p style="color:#666; margin-bottom:20px;">SECURITY CLEARANCE REQUIRED</p>
-        <input type="number" id="pin-input" class="input-box" placeholder="PIN CODE">
-        <button class="btn" onclick="checkPin()">ENTER</button>
-    </div>
-
-    <div id="screen-mission" class="screen hidden">
-        <div style="text-align:right; width:100%; padding:10px; color:#444; font-size:0.8rem;">SECURE CONNECTION (LIVE)</div>
-        <div id="target-display" class="target-icon">❓</div>
-        <div id="target-name" style="font-size:1.5rem; font-weight:bold; margin-bottom:5px;">TARGET</div>
-        <p class="mission-hint">向友軍單位索取解鎖代碼<br>REQUEST CODE FROM ALLY</p>
-        <input type="text" id="mission-input" class="input-box" placeholder="CODE" maxlength="10">
-        <button class="btn" onclick="verifyCode()">VERIFY CODE</button>
-        <div id="attempts-display" class="attempts-left hidden">⚠ 密碼錯誤 (剩餘 2 次機會)</div>
-    </div>
-
-    <div id="screen-locked" class="screen hidden">
-        <div class="lock-icon" onclick="unlockTap()">❌</div>
-        <div class="lock-msg" style="color:red; font-size:1.5rem; font-weight:bold; text-align:center;">
-            SYSTEM LOCKED<br>PLEASE CONTACT HQ
+    <div id="team-selector" class="hidden">
+        <h2 class="menu-title">SELECT SQUAD</h2>
+        <button class="team-btn" style="border-color:#ff3333;" onclick="selectTeam('loc_1')">🔴 ALPHA TEAM</button>
+        <button class="team-btn" style="border-color:#33ff33;" onclick="selectTeam('loc_2')">🟢 BRAVO TEAM</button>
+        <button class="team-btn" style="border-color:#3388ff;" onclick="selectTeam('loc_3')">🔵 CHARLIE TEAM</button>
+        <button class="team-btn" style="border-color:#ffff33;" onclick="selectTeam('loc_4')">🟡 DELTA TEAM</button>
+        <div style="margin-top:20px; color:#666; font-size:0.8rem; text-align:center;">
+            OR SCAN QR CODE AT LOCATION
         </div>
     </div>
 
-    <div id="screen-success" class="screen hidden">
-        <div class="success-icon">✅</div>
-        <div class="success-title">ACCESS GRANTED</div>
-        <div class="next-step-box">
-            <span class="step-label">NEXT LOCATION (下一站)</span>
-            <span id="success-next-loc" class="step-val">...</span>
+    <div id="app" class="hidden">
+        
+        <div id="screen-input" class="screen">
+            <div style="font-size:0.8rem; color:#666; width:100%; text-align:right; margin-bottom:20px;">ONLINE: <span id="session-id-disp">...</span></div>
+            <div class="status-icon" id="target-icon">❓</div>
+            <div class="info-text" id="target-name">Loading...</div>
+            <p style="color:#888; margin-bottom:30px;">REQUEST CODE FROM ALLY</p>
+            <input type="text" id="code-input" class="input-box" placeholder="CODE" maxlength="4">
+            <button class="btn" onclick="submitCode()">VERIFY</button>
+            <div id="error-msg" style="color:red; margin-top:15px; display:none;">ACCESS DENIED</div>
         </div>
-        <div class="next-step-box">
-            <span class="step-label">COMM PROTOCOL (通訊指令)</span>
-            <span id="success-comm-msg" class="comm-val">...</span>
-        </div>
-        <p style="color:#666; font-size:0.8rem; margin-top:20px;">DATA UPLOADED TO HQ</p>
-    </div>
 
-    <div id="rescue-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; flex-direction:column; align-items:center; justify-content:center;">
-        <h2 style="color:red;">OVERRIDE LOCK</h2>
-        <input type="number" id="rescue-input" class="input-box" placeholder="RESCUE CODE">
-        <button class="btn" style="border-color:red; color:red;" onclick="attemptRescue()">UNLOCK</button>
-        <button class="btn" style="border-color:#666; color:#666;" onclick="document.getElementById('rescue-modal').style.display='none'">CANCEL</button>
+        <div id="screen-success" class="screen hidden" style="background:#001a00;">
+            <div class="status-icon">✅</div>
+            <div class="info-text" style="color:var(--highlight);">ACCESS GRANTED</div>
+            <div style="margin-top:20px; width:100%; max-width:320px;">
+                <div style="color:#888; font-size:0.8rem;">NEXT OBJECTIVE</div>
+                <div id="next-hint" class="info-text" style="font-size:1.5rem;">...</div>
+            </div>
+            <div class="comm-msg" id="comm-msg">...</div>
+        </div>
+
+        <div id="screen-wait" class="screen hidden">
+            <div class="status-icon">⏳</div>
+            <div class="info-text">SYSTEM STANDBY</div>
+            <p style="color:#666; text-align:center;">WAITING FOR HQ SIGNAL</p>
+            <div style="color:#444; font-size:0.8rem; margin-top:10px;">請教官在 HQ 端啟動戰局</div>
+            <button class="btn" style="margin-top:20px;" onclick="location.reload()">RECONNECT</button>
+        </div>
+
     </div>
 
     <script>
-        function selectTeam(startLocId) {
-            // 重新載入頁面，並帶上 ID 參數
-            window.location.href = `mission_v2.html?id=${startLocId}`;
-        }
+        // --- 1. CONFIGURATION ---
         const SUPABASE_URL = 'https://lqhgpeuoejdyodanvauv.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxaGdwZXVvZWpkeW9kYW52YXV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDUyMzAsImV4cCI6MjA3OTA4MTIzMH0.my3U8mN06xm79ArFamTpWydf7rYFXOKT5-ooKmqb_O4';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const missionId = urlParams.get('id'); // e.g., 'loc_1'
+        let activeSessionId = null;
+        let currentLocationId = null;
+        let currentMissionData = null;
 
-        // Local State
-        let dbId = null;
-        let correctCode = null;
-        let nextHint = "";
-        let commMsg = "";
-        let missionCat = "";
+        // 安全機制：超時顯示重試
+        setTimeout(() => {
+            const retryBtn = document.querySelector('.loading-retry');
+            if(retryBtn) retryBtn.style.display = 'block';
+        }, 5000);
 
-        // Persistent State
-        let wrongAttempts = parseInt(localStorage.getItem(`attempts_${missionId}`)) || 0;
-        let isLocked = localStorage.getItem('global_device_status') === 'LOCKED';
+        // Helper: 安全隱藏 loading (避免找不到物件報錯)
+        function hideLoading() {
+            const el = document.getElementById('loading');
+            if (el) el.style.display = 'none';
+        }
 
-        // Rescue Codes (Offline fallback logic is fine here)
-        const rescueCodes = { 'fruits': ['7001'], 'animals': ['8001'], 'plants': ['9001'] }; // Simplified for demo
-
+        // --- 2. INITIALIZATION ---
         window.onload = async () => {
-            // 1. 抓取網址參數
             const urlParams = new URLSearchParams(window.location.search);
-            // 注意：請確認您原本變數是叫 missionId 還是 locationId，這裡統一用 missionId
-            const missionId = urlParams.get('id'); 
+            currentLocationId = urlParams.get('id');
 
-            // 如果網址沒有 ID，就顯示選單
-            if (!missionId) {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('team-selector').style.display = 'flex';
-                document.getElementById('app').style.display = 'none'; // 隱藏主介面
-                return; // 程式停在這裡，等待玩家點擊按鈕
+            // 情況 A：網址沒有 ID，顯示選單
+            if (!currentLocationId) {
+                hideLoading();
+                const selector = document.getElementById('team-selector');
+                if(selector) selector.classList.remove('hidden');
+                return;
             }
 
-            // --- 有 ID 了，準備進入主程式 ---
-            document.getElementById('team-selector').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
+            // 情況 B：有 ID，進入主程式
+            const app = document.getElementById('app');
+            if(app) app.classList.remove('hidden');
+            await checkSessionAndLoadMission();
+        };
 
-    
-            if (isLocked) { 
-                document.getElementById('loading').style.display = 'none'; // 確保 loading 消失
-                showScreen('screen-locked'); 
-                return; 
+        function selectTeam(id) {
+            window.location.href = `mission_v2.html?id=${id}`;
+        }
+
+        async function checkSessionAndLoadMission() {
+            // A. 找最新的活躍戰局
+            const { data: sessions, error } = await supabase
+                .from('game_sessions')
+                .select('id')
+                .eq('is_active', true)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            // 連線失敗或無戰局
+            if (error || !sessions || sessions.length === 0) {
+                console.log("No active session found.");
+                showScreen('screen-wait'); 
+                hideLoading();
+                return;
             }
 
-            // Fetch Mission Data
-            try {
-                // 1. Get latest active session
-                const { data: sessions, error: sErr } = await supabase.from('game_sessions').select('id').eq('is_active', true).order('created_at', {ascending:false}).limit(1);
-                if (sErr || !sessions.length) throw new Error("NO ACTIVE GAME SESSION");
-                
-                // 2. Get mission details
-                const { data: mission, error: mErr } = await supabase.from('mission_states')
-                    .select('*')
-                    .eq('session_id', sessions[0].id)
-                    .eq('location_id', missionId)
-                    .single();
+            activeSessionId = sessions[0].id;
+            const disp = document.getElementById('session-id-disp');
+            if(disp) disp.innerText = activeSessionId.split('-')[0];
 
-                if (mErr || !mission) throw new Error("MISSION DATA NOT FOUND");
+            // B. 監聽戰局重置
+            supabase.channel('public:game_sessions')
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_sessions', filter: `id=eq.${activeSessionId}` }, 
+                (payload) => {
+                    if (payload.new.is_active === false) {
+                        alert("MISSION TERMINATED BY HQ");
+                        location.reload();
+                    }
+                }).subscribe();
 
-                // 3. Populate Data
-                dbId = mission.id;
-                correctCode = mission.code;
-                nextHint = mission.next_hint;
-                commMsg = mission.comm_msg;
-                missionCat = mission.category;
+            // C. 載入任務資料
+            await loadMissionData();
+        }
 
-                document.getElementById('target-display').innerText = mission.icon;
-                document.getElementById('target-name').innerText = mission.name;
+        async function loadMissionData() {
+            const { data, error } = await supabase
+                .from('mission_states')
+                .select('*')
+                .eq('session_id', activeSessionId)
+                .eq('location_id', currentLocationId)
+                .single();
 
-                // 4. Check if already solved (Optional: allow re-entry or show success)
-                if (mission.is_solved) {
-                    showSuccessScreen();
-                } else {
-                    showScreen('screen-pin');
+            // 找不到資料
+            if (error || !data) {
+                console.error("Mission data not found", error);
+                hideLoading();
+                alert("⚠ 無法取得任務資料\n\n可能原因：\n1. HQ 尚未初始化新戰局\n2. 該地點 ID 無效");
+                showScreen('screen-wait');
+                return;
+            }
+
+            currentMissionData = data;
+            hideLoading();
+
+            // D. 判斷是否已解開
+            if (data.is_solved) {
+                showSuccess(data);
+            } else {
+                showInput(data);
+            }
+        }
+
+        function showInput(data) {
+            showScreen('screen-input');
+            document.getElementById('target-icon').innerText = data.icon;
+            document.getElementById('target-name').innerText = data.name;
+            document.getElementById('code-input').value = '';
+            document.getElementById('error-msg').style.display = 'none';
+        }
+
+        function showSuccess(data) {
+            showScreen('screen-success');
+            document.getElementById('next-hint').innerText = data.next_hint;
+            document.getElementById('comm-msg').innerText = data.comm_msg;
+        }
+
+        async function submitCode() {
+            const input = document.getElementById('code-input').value.toUpperCase().trim();
+            const correctCode = currentMissionData.code;
+
+            if (input === correctCode) {
+                // 1. 更新資料庫
+                document.getElementById('loading').style.display = 'flex';
+                const { error } = await supabase
+                    .from('mission_states')
+                    .update({ is_solved: true, solved_at: new Date() })
+                    .eq('id', currentMissionData.id);
+
+                if (error) {
+                    alert("NETWORK ERROR: 無法回傳數據");
+                    hideLoading();
+                    return;
                 }
 
-            } catch (e) {
-                console.error(e);
-                showError(e.message);
+                // 2. 顯示成功
+                currentMissionData.is_solved = true; 
+                showSuccess(currentMissionData);
+                hideLoading();
+
+            } else {
+                // 錯誤處理
+                const errEl = document.getElementById('error-msg');
+                errEl.style.display = 'block';
+                errEl.innerText = "ACCESS DENIED";
+                
+                const box = document.getElementById('code-input');
+                box.style.borderColor = 'red';
+                setTimeout(() => box.style.borderColor = '#00ff41', 500);
             }
-        };
+        }
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
+            const el = document.getElementById(id);
+            if(el) el.classList.remove('hidden');
         }
 
-        function showError(msg) {
-            showScreen('screen-error');
-            document.getElementById('error-msg').innerText = msg;
-        }
-
-        function checkPin() {
-            const pin = document.getElementById('pin-input').value;
-            if (pin === '2758') showScreen('screen-mission');
-            else if (pin === '8964') { localStorage.clear(); location.reload(); } // Hard reset
-            else { alert('WRONG PIN'); document.getElementById('pin-input').value=''; }
-        }
-
-        async function verifyCode() {
-            const inputEl = document.getElementById('mission-input');
-            let rawInput = inputEl.value.toUpperCase();
-            
-            // Fuzzy Logic: 0 -> O
-            let cleanInput = rawInput.replace(/[^A-Z0-9]/g, '').replace(/0/g, 'O');
-            let target = correctCode.replace(/0/g, 'O');
-
-            if (cleanInput === target) {
-                // Success!
-                await supabase.from('mission_states').update({ is_solved: true, solved_at: new Date() }).eq('id', dbId);
-                localStorage.removeItem(`attempts_${missionId}`);
-                showSuccessScreen();
-            } else {
-                // Fail
-                wrongAttempts++;
-                localStorage.setItem(`attempts_${missionId}`, wrongAttempts);
-                inputEl.value = '';
-                inputEl.style.borderColor = 'red';
-                setTimeout(()=>inputEl.style.borderColor='var(--highlight)', 500);
-
-                if (wrongAttempts >= 3) {
-                    localStorage.setItem('global_device_status', 'LOCKED');
-                    showScreen('screen-locked');
-                } else {
-                    const el = document.getElementById('attempts-display');
-                    el.classList.remove('hidden');
-                    el.innerText = `⚠ 密碼錯誤 (剩餘 ${3-wrongAttempts} 次機會)`;
-                }
-            }
-        }
-
-        function showSuccessScreen() {
-            document.getElementById('success-next-loc').innerText = nextHint;
-            document.getElementById('success-comm-msg').innerText = commMsg;
-            showScreen('screen-success');
-        }
-
-        // Tap to unlock logic (simplified)
-        let tapCount = 0;
-        function unlockTap() {
-            tapCount++;
-            if (tapCount >= 5) {
-                tapCount = 0;
-                document.getElementById('rescue-modal').style.display = 'flex';
-            }
-            setTimeout(() => tapCount = 0, 1000);
-        }
-
-        function attemptRescue() {
-            const code = document.getElementById('rescue-input').value;
-             // Demo valid code check. In real game, check against missionCat
-            if (code === '7001' || code === '8001' || code === '9001') { 
-                localStorage.setItem('global_device_status', 'FRESH');
-                localStorage.setItem(`attempts_${missionId}`, 0);
-                location.reload();
-            } else {
-                alert('INVALID CODE');
-            }
-        }
     </script>
 </body>
 </html>
