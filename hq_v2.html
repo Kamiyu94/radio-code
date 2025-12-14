@@ -123,17 +123,23 @@
 
         async function startNewGame() {
             if(!confirm("⚠️ 確定要啟動新戰局？\n這將會重置目前所有的連線進度！")) return;
-            
+    
             document.getElementById('loading').style.display = 'flex';
-            
+    
             const mode = document.querySelector('input[name="gameMode"]:checked').value;
             const isFixed = (mode === 'fixed');
 
             // 1. Create Session
-            const { data: session, error } = await supabase.from('game_sessions').insert([{ is_active: true }]).select().single();
-            if(error) { alert("Error creating session"); console.error(error); return; }
-            
-            activeSessionId = session.id;
+            const { data: session, error: sessionError } = await supabase.from('game_sessions').insert([{ is_active: true }]).select().single();
+    
+            if(sessionError) { 
+                document.getElementById('loading').style.display = 'none';
+                alert(`ERROR: 無法創建戰局，請檢查 RLS INSERT 權限！\n詳情：${sessionError.message}`); 
+                console.error(sessionError); 
+                return; 
+            }
+    
+    activeSessionId = session.id;
 
             // 2. Prepare Data
             const shuffledFruits = shuffle([...MASTER_ASSETS.fruits]);
@@ -181,15 +187,14 @@
             });
 
             // 3. Upload Mission States
-            await supabase.from('mission_states').insert(payload);
-            
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('status-text').innerText = `SESSION ACTIVE: ${activeSessionId.split('-')[0]}... [${isFixed ? 'FIXED' : 'RANDOM'}]`;
-            
-            // 4. Render & Listen
-            renderDashboard(payload);
-            startListening();
-        }
+            const { error: missionError } = await supabase.from('mission_states').insert(payload);
+    
+            if(missionError) {
+                document.getElementById('loading').style.display = 'none';
+                alert(`ERROR: 無法上傳任務，請檢查 RLS INSERT 權限！\n詳情：${missionError.message}`);
+                console.error(missionError);
+                return;
+            }
 
         function renderDashboard(data) {
             const container = document.getElementById('dashboard');
