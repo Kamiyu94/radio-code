@@ -158,10 +158,10 @@
                 { id: 'loc_7', cat: 'animals', hint: '前往 LOC 10', comm: '切換至 [主頻 CH2 / 備頻 CH4]。\n切換後，請呼叫該頻道的友軍單位。' },
                 { id: 'loc_8', cat: 'animals', hint: '前往 LOC 12', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' },
                 // Phase 3 (Plants)
-                { id: 'hq_a', cat: 'plants', hint: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' },
-                { id: 'hq_b', cat: 'plants', hint: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' },
-                { id: 'hq_c', cat: 'plants', hint: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' },
-                { id: 'hq_d', cat: 'plants', hint: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }
+                { id: 'loc_9', cat: 'plants', hint: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' },
+                { id: 'loc_10', cat: 'plants', hint: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' },
+                { id: 'loc_11', cat: 'plants', hint: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' },
+                { id: 'loc_12', cat: 'plants', hint: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }
             ];
 
             const payload = missions.map((m, idx) => {
@@ -210,7 +210,7 @@
             
             // Sort by ID order: loc_1... loc_8, hq_a...
             // (Simple mapping for display order)
-            const order = ['loc_1','loc_2','loc_3','loc_4','loc_5','loc_6','loc_7','loc_8','hq_a','hq_b','hq_c','hq_d'];
+            const order = ['loc_1','loc_2','loc_3','loc_4','loc_5','loc_6','loc_7','loc_8','loc_9','loc_10','loc_11','loc_12'];
             
             data.sort((a,b) => order.indexOf(a.location_id) - order.indexOf(b.location_id));
 
