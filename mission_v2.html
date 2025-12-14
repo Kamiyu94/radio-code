@@ -9,9 +9,15 @@
         :root {
             --bg-color: #000000;
             --text-main: #e0e0e0;
-            --highlight: #00ff41; /* V2 招牌綠 */
+            --highlight: #00ff41; 
             --danger: #ff3333;
             --panel-bg: #111111;
+            
+            /* 小隊代表色 */
+            --alpha: #ff3333;
+            --bravo: #33cc33;
+            --charlie: #3388ff;
+            --delta: #ffff33;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -29,33 +35,73 @@
 
         .hidden { display: none !important; }
 
-        /* --- 1. 小隊選擇選單 --- */
-        #team-selector {
+        /* --- 1. 身分選擇畫面 (只會出現一次) --- */
+        #identity-screen {
             height: 100%; width: 100%;
             display: flex; flex-direction: column;
-            padding: 20px;
-            overflow-y: auto;
+            padding: 20px; overflow-y: auto; align-items: center; justify-content: center;
+            background: #050505; z-index: 300;
         }
         
-        .menu-title { text-align: center; color: var(--highlight); margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px;}
+        .id-title { font-size: 1.5rem; color: #fff; margin-bottom: 10px; font-weight: bold; letter-spacing: 2px; }
+        .id-sub { font-size: 0.9rem; color: #666; margin-bottom: 30px; text-align: center; max-width: 300px;}
         
-        .team-btn {
-            width: 100%; padding: 25px; margin-bottom: 15px;
-            font-size: 1.5rem; font-weight: bold; border-radius: 10px;
-            background: #111; color: #fff; border: 2px solid #333;
-            text-align: left; position: relative; cursor: pointer;
-            transition: 0.2s;
+        .team-select-btn {
+            width: 100%; max-width: 300px; padding: 20px; margin-bottom: 15px;
+            font-size: 1.2rem; font-weight: 900; border-radius: 8px;
+            background: #111; color: #fff; border: 2px solid #444;
+            text-align: center; cursor: pointer; transition: 0.2s;
         }
-        .team-btn:active { transform: scale(0.98); filter: brightness(1.2); }
-        .team-btn::after { content: '>'; position: absolute; right: 20px; opacity: 0.5; }
+        .team-select-btn:active { transform: scale(0.98); filter: brightness(1.2); }
 
-        /* --- 2. 任務主介面 --- */
+        /* --- 2. 密碼本檢視 (Overlay) --- */
+        #codebook-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #050505; z-index: 200; overflow-y: auto; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        
+        .book-header { 
+            width: 100%; padding: 15px; text-align: center; font-size: 1.5rem; font-weight: 900; 
+            color: #fff; margin-bottom: 10px; border-radius: 8px; position: sticky; top: 0; z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .book-category-title {
+            width: 100%; max-width: 350px;
+            color: #666; font-size: 0.8rem; margin-top: 20px; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 2px;
+        }
+
+        .book-grid {
+            display: grid; grid-template-columns: 1fr auto; gap: 8px;
+            width: 100%; max-width: 350px; margin-bottom: 10px;
+        }
+        
+        .book-item-col {
+            display: flex; align-items: center; padding: 10px;
+            background: rgba(255,255,255,0.05); border-radius: 6px 0 0 6px; font-size: 1rem;
+        }
+        .book-icon { font-size: 1.5rem; margin-right: 12px; }
+
+        .book-code-col {
+            display: flex; align-items: center; justify-content: center; padding: 10px; min-width: 100px;
+            background: rgba(0,0,0,0.3); border: 1px solid var(--highlight); border-radius: 0 6px 6px 0;
+            font-family: 'Consolas', monospace; font-size: 1.2rem; font-weight: 900; color: var(--highlight); letter-spacing: 1px;
+        }
+
+        .close-book-btn {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #333; color: #fff; border: 1px solid #666; padding: 10px 30px; border-radius: 20px;
+            font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 210;
+        }
+
+        /* --- 3. 任務主介面 --- */
         #app { height: 100%; width: 100%; position: relative; }
 
         .screen { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-            padding: 20px; padding-top: 10vh;
+            padding: 20px; padding-top: 5vh;
             background: #000; z-index: 10;
         }
 
@@ -73,12 +119,31 @@
         }
         .btn:active { background: var(--highlight); color: #000; }
 
+        /* 呼叫提示區塊 */
+        .call-card {
+            border: 2px dashed #444; border-radius: 12px; padding: 20px; width: 100%; max-width: 320px;
+            text-align: center; margin-bottom: 30px; background: rgba(255,255,255,0.05);
+        }
+        .call-label { color: #888; font-size: 0.9rem; display: block; margin-bottom: 10px; }
+        .call-target { font-size: 1.8rem; font-weight: 900; display: block; letter-spacing: 1px; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
+
+        .my-book-btn {
+            margin-top: auto; margin-bottom: 30px; 
+            background: #111; color: #fff; border: 1px solid #666;
+            padding: 15px; width: 100%; max-width: 300px; font-size: 1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 8px;
+        }
+        
+        .identity-badge {
+            position: absolute; top: 10px; left: 10px; 
+            font-size: 0.7rem; color: #666; border: 1px solid #333; padding: 2px 6px; border-radius: 4px;
+        }
+
         /* 狀態畫面 */
         .status-icon { font-size: 5rem; margin-bottom: 20px; }
         .info-text { font-size: 1.2rem; color: #fff; margin-bottom: 10px; font-weight: bold; }
         .comm-msg { color: #ffcc00; white-space: pre-line; text-align: center; margin-top: 20px; border: 1px dashed #444; padding: 15px; width: 100%; }
 
-        /* Loading Overlay - 這是最重要的部分 */
         #loading {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); z-index: 99;
@@ -94,27 +159,45 @@
         <div class="loading-retry" onclick="location.reload()">RETRY CONNECTION</div>
     </div>
 
-    <div id="team-selector" class="hidden">
-        <h2 class="menu-title">SELECT SQUAD</h2>
-        <button class="team-btn" style="border-color:#ff3333;" onclick="selectTeam('loc_1')">🔴 ALPHA TEAM</button>
-        <button class="team-btn" style="border-color:#33ff33;" onclick="selectTeam('loc_2')">🟢 BRAVO TEAM</button>
-        <button class="team-btn" style="border-color:#3388ff;" onclick="selectTeam('loc_3')">🔵 CHARLIE TEAM</button>
-        <button class="team-btn" style="border-color:#ffff33;" onclick="selectTeam('loc_4')">🟡 DELTA TEAM</button>
-        <div style="margin-top:20px; color:#666; font-size:0.8rem; text-align:center;">
-            OR SCAN QR CODE AT LOCATION
-        </div>
+    <div id="identity-screen" class="hidden">
+        <div class="id-title">IDENTITY CHECK</div>
+        <div class="id-sub">請選擇您所屬的小隊<br>(綁定後無法更改)</div>
+        
+        <div class="team-select-btn" style="border-color:var(--alpha); color:var(--alpha);" onclick="setIdentity('A')">🔴 ALPHA SQUAD</div>
+        <div class="team-select-btn" style="border-color:var(--bravo); color:var(--bravo);" onclick="setIdentity('B')">🟢 BRAVO SQUAD</div>
+        <div class="team-select-btn" style="border-color:var(--charlie); color:var(--charlie);" onclick="setIdentity('C')">🔵 CHARLIE SQUAD</div>
+        <div class="team-select-btn" style="border-color:var(--delta); color:var(--delta);" onclick="setIdentity('D')">🟡 DELTA SQUAD</div>
+    </div>
+
+    <div id="codebook-overlay" class="hidden">
+        <div id="book-header" class="book-header">MY BOOK</div>
+        <div id="book-content" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
+        <button class="close-book-btn" onclick="closeCodeBook()">CLOSE BOOK</button>
     </div>
 
     <div id="app" class="hidden">
         
         <div id="screen-input" class="screen">
-            <div style="font-size:0.8rem; color:#666; width:100%; text-align:right; margin-bottom:20px;">ONLINE: <span id="session-id-disp">...</span></div>
-            <div class="status-icon" id="target-icon">❓</div>
-            <div class="info-text" id="target-name">Loading...</div>
-            <p style="color:#888; margin-bottom:30px;">REQUEST CODE FROM ALLY</p>
+            <div class="identity-badge" id="identity-display">UNKOWN</div>
+            <div style="font-size:0.8rem; color:#666; width:100%; text-align:right; margin-bottom:10px;">ONLINE: <span id="session-id-disp">...</span></div>
+            
+            <div class="status-icon" id="target-icon" style="font-size:4rem; margin-bottom:10px;">❓</div>
+            <div class="info-text" id="target-name" style="margin-bottom:30px;">Loading...</div>
+            
+            <div class="call-card" id="call-card">
+                <span class="call-label">RADIO FREQUENCY REQUIRED</span>
+                <span class="call-label" style="font-size:0.8rem;">請呼叫下方小隊詢問代碼：</span>
+                <span class="call-target" id="call-target-text">...</span>
+            </div>
+            
             <input type="text" id="code-input" class="input-box" placeholder="CODE" maxlength="4">
             <button class="btn" onclick="submitCode()">VERIFY</button>
-            <div id="error-msg" style="color:red; margin-top:15px; display:none;">ACCESS DENIED</div>
+            
+            <div id="error-msg" style="color:red; margin-top:10px; display:none;">ACCESS DENIED</div>
+
+            <button class="my-book-btn" onclick="openMyBook()">
+                <span>📖 開啟我的密碼本</span>
+            </button>
         </div>
 
         <div id="screen-success" class="screen hidden" style="background:#001a00;">
@@ -133,6 +216,7 @@
             <p style="color:#666; text-align:center;">WAITING FOR HQ SIGNAL</p>
             <div style="color:#444; font-size:0.8rem; margin-top:10px;">請教官在 HQ 端啟動戰局</div>
             <button class="btn" style="margin-top:20px;" onclick="location.reload()">RECONNECT</button>
+            <button class="btn" style="margin-top:20px; border-color:#666; color:#666;" onclick="clearIdentity()">RESET IDENTITY</button>
         </div>
 
     </div>
@@ -143,9 +227,40 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxaGdwZXVvZWpkeW9kYW52YXV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDUyMzAsImV4cCI6MjA3OTA4MTIzMH0.my3U8mN06xm79ArFamTpWydf7rYFXOKT5-ooKmqb_O4';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // --- 2. 靜態資料 (用於顯示密碼本 & 判斷呼叫對象) ---
+        const TEAM_INFO = {
+            'A': { name: 'ALPHA SQUAD', color: 'var(--alpha)', display: '🔴 ALPHA' },
+            'B': { name: 'BRAVO SQUAD', color: 'var(--bravo)', display: '🟢 BRAVO' },
+            'C': { name: 'CHARLIE SQUAD', color: 'var(--charlie)', display: '🔵 CHARLIE' },
+            'D': { name: 'DELTA SQUAD', color: 'var(--delta)', display: '🟡 DELTA' }
+        };
+
+        // 這些資料用來讓學員看「自己的書」
+        const SEEDS = {
+            A: ["L2Z5", "P8K3", "S4M1", "T4W7", "X4T9", "Q4Y9", "B1D6", "K7X1", "V2C5", "O6A4", "U9E2", "Z3N7", "C7M1", "D5S2", "X2U5", "R9S6", "N3Y0", "G6P9", "G2V4", "B8H7", "L6P2", "F5G8", "Z7D5", "K3I6", "E2A4", "J3R6", "C6U3", "P8M5"],
+            B: ["L3T6", "D8M3", "Z8A4", "W5Y3", "C5K1", "B2H9", "I1R8", "J9S0", "D1E5", "B6C9", "G7Q5", "U6Q4", "P5Q9", "B2C8", "H9I2", "D7E1", "W6X3", "U4V0", "F3G8", "H5I0", "U7V1", "L6N3", "Z7D5", "Z5A3", "B9C4", "O8P2", "W2Y6", "D1E8"],
+            C: ["G5H0", "K1L9", "M6N4", "C9D1", "Q0R2", "A4B7", "E2F6", "U7V9", "I8J3", "W2X5", "V1G5", "O3P7", "C2D8", "L0M9", "N4O6", "T5U0", "V9W3", "D0E5", "L2M7", "J6K8", "A3B6", "H1I5", "D0E4", "V1W6", "A9B3", "F9G2", "X7Z2", "C0D5"],
+            D: ["G6I4", "L1M7", "W7Z1", "P9R3", "C8D0", "Q4Y9", "C2D6", "K7X1", "U0V6", "E8F3", "N5O2", "S4T8", "C9E4", "U8V3", "M4N9", "W5X0", "S1T7", "C6D2", "O3P5", "Q8R1", "S2T6", "F5G8", "U7V4", "Z9A3", "D1E6", "L4M9", "B8C2", "F5G0"]
+        };
+
+        const MASTER_ASSETS = {
+            fruits: [{n:"葡萄", i:"🍇"}, {n:"西瓜", i:"🍉"}, {n:"橘子", i:"🍊"}, {n:"檸檬", i:"🍋"}, {n:"蘋果", i:"🍎"}, {n:"梨子", i:"🍐"}, {n:"椰子", i:"🥥"}, {n:"芒果", i:"🥭"}, {n:"哈密瓜", i:"🍈"}, {n:"番茄", i:"🍅"}, {n:"草莓", i:"🍓"}, {n:"鳳梨", i:"🍍"}],
+            animals: [{n:"獅子", i:"🦁"}, {n:"老鷹", i:"🦅"}, {n:"鱷魚", i:"🐊"}, {n:"貓頭鷹", i:"🦉"}, {n:"長頸鹿", i:"🦒"}, {n:"袋鼠", i:"🦘"}],
+            plants: [{n:"向日葵", i:"🌻"}, {n:"仙人掌", i:"🌵"}, {n:"竹子", i:"🎋"}, {n:"扶桑花", i:"🌺"}, {n:"楓葉", i:"🍁"}, {n:"薰衣草", i:"💐"}, {n:"薄荷", i:"🌿"}, {n:"松樹", i:"🌲"}, {n:"雛菊", i:"🌼"}, {n:"貝殼", i:"🐚"}]
+        };
+
+        // 這個表必須跟 HQ_V2 的 missions 設定完全一致，才能正確提示要呼叫誰
+        const TARGET_MAPPING = {
+            'loc_1': 'B', 'loc_2': 'A', 'loc_3': 'D', 'loc_4': 'C',
+            'loc_5': 'C', 'loc_6': 'D', 'loc_7': 'A', 'loc_8': 'B',
+            'loc_9': 'B', 'loc_10': 'A', 'loc_11': 'D', 'loc_12': 'C'
+        };
+
+        // --- 3. STATE MANAGEMENT ---
         let activeSessionId = null;
         let currentLocationId = null;
         let currentMissionData = null;
+        let myIdentity = localStorage.getItem('my_squad_identity'); // 讀取儲存的身分
 
         // 安全機制：超時顯示重試
         setTimeout(() => {
@@ -153,37 +268,55 @@
             if(retryBtn) retryBtn.style.display = 'block';
         }, 5000);
 
-        // Helper: 安全隱藏 loading (避免找不到物件報錯)
         function hideLoading() {
             const el = document.getElementById('loading');
             if (el) el.style.display = 'none';
         }
 
-        // --- 2. INITIALIZATION ---
+        // --- 4. INITIALIZATION ---
         window.onload = async () => {
             const urlParams = new URLSearchParams(window.location.search);
             currentLocationId = urlParams.get('id');
 
-            // 情況 A：網址沒有 ID，顯示選單
+            // 1. 檢查是否有身分
+            if (!myIdentity) {
+                hideLoading();
+                document.getElementById('identity-screen').classList.remove('hidden');
+                return; 
+            }
+
+            // 2. 如果沒 ID，顯示「請掃描」提示 (這裡簡化，直接跳等待畫面或提示)
             if (!currentLocationId) {
                 hideLoading();
-                const selector = document.getElementById('team-selector');
-                if(selector) selector.classList.remove('hidden');
+                alert("請掃描現場 QR Code 以進入任務");
+                // 這裡可以選擇顯示一個簡單的說明頁，或保持空白
                 return;
             }
 
-            // 情況 B：有 ID，進入主程式
-            const app = document.getElementById('app');
-            if(app) app.classList.remove('hidden');
+            // 3. 有身分且有 ID，進入主程式
+            document.getElementById('app').classList.remove('hidden');
+            document.getElementById('identity-display').innerText = myIdentity + " SQUAD";
             await checkSessionAndLoadMission();
         };
 
-        function selectTeam(id) {
-            window.location.href = `mission_v2.html?id=${id}`;
+        // --- 5. IDENTITY LOGIC ---
+        function setIdentity(team) {
+            if(confirm(`確認您的身分為 ${team} 小隊？\n確認後將無法更改。`)) {
+                localStorage.setItem('my_squad_identity', team);
+                myIdentity = team;
+                location.reload(); // 重新整理以進入流程
+            }
         }
 
+        function clearIdentity() {
+            if(confirm("確定要重置身分嗎？")) {
+                localStorage.removeItem('my_squad_identity');
+                location.reload();
+            }
+        }
+
+        // --- 6. MISSION LOGIC ---
         async function checkSessionAndLoadMission() {
-            // A. 找最新的活躍戰局
             const { data: sessions, error } = await supabase
                 .from('game_sessions')
                 .select('id')
@@ -191,7 +324,6 @@
                 .order('created_at', { ascending: false })
                 .limit(1);
 
-            // 連線失敗或無戰局
             if (error || !sessions || sessions.length === 0) {
                 console.log("No active session found.");
                 showScreen('screen-wait'); 
@@ -203,7 +335,6 @@
             const disp = document.getElementById('session-id-disp');
             if(disp) disp.innerText = activeSessionId.split('-')[0];
 
-            // B. 監聽戰局重置
             supabase.channel('public:game_sessions')
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_sessions', filter: `id=eq.${activeSessionId}` }, 
                 (payload) => {
@@ -213,7 +344,6 @@
                     }
                 }).subscribe();
 
-            // C. 載入任務資料
             await loadMissionData();
         }
 
@@ -225,7 +355,6 @@
                 .eq('location_id', currentLocationId)
                 .single();
 
-            // 找不到資料
             if (error || !data) {
                 console.error("Mission data not found", error);
                 hideLoading();
@@ -237,7 +366,6 @@
             currentMissionData = data;
             hideLoading();
 
-            // D. 判斷是否已解開
             if (data.is_solved) {
                 showSuccess(data);
             } else {
@@ -251,6 +379,18 @@
             document.getElementById('target-name').innerText = data.name;
             document.getElementById('code-input').value = '';
             document.getElementById('error-msg').style.display = 'none';
+
+            // ★ 核心邏輯：顯示要呼叫誰
+            const targetTeamCode = TARGET_MAPPING[currentLocationId];
+            if (targetTeamCode) {
+                const targetInfo = TEAM_INFO[targetTeamCode];
+                const targetText = document.getElementById('call-target-text');
+                const callCard = document.getElementById('call-card');
+                
+                targetText.innerText = targetInfo.display;
+                targetText.style.color = targetInfo.color;
+                callCard.style.borderColor = targetInfo.color;
+            }
         }
 
         function showSuccess(data) {
@@ -264,7 +404,6 @@
             const correctCode = currentMissionData.code;
 
             if (input === correctCode) {
-                // 1. 更新資料庫
                 document.getElementById('loading').style.display = 'flex';
                 const { error } = await supabase
                     .from('mission_states')
@@ -277,17 +416,14 @@
                     return;
                 }
 
-                // 2. 顯示成功
                 currentMissionData.is_solved = true; 
                 showSuccess(currentMissionData);
                 hideLoading();
 
             } else {
-                // 錯誤處理
                 const errEl = document.getElementById('error-msg');
                 errEl.style.display = 'block';
                 errEl.innerText = "ACCESS DENIED";
-                
                 const box = document.getElementById('code-input');
                 box.style.borderColor = 'red';
                 setTimeout(() => box.style.borderColor = '#00ff41', 500);
@@ -298,6 +434,59 @@
             document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
             const el = document.getElementById(id);
             if(el) el.classList.remove('hidden');
+        }
+
+        // --- 7. BOOK UI (只開啟自己的書) ---
+        function openMyBook() {
+            if (!myIdentity) return;
+            
+            const seeds = SEEDS[myIdentity];
+            const info = TEAM_INFO[myIdentity];
+            const contentArea = document.getElementById('book-content');
+            const header = document.getElementById('book-header');
+
+            header.innerText = info.name + " BOOK";
+            header.style.backgroundColor = info.color;
+            contentArea.innerHTML = '';
+            
+            createCategoryGrid(contentArea, 'FRUITS / 水果', MASTER_ASSETS.fruits, seeds, info.color, 0);
+            createCategoryGrid(contentArea, 'ANIMALS / 動物', MASTER_ASSETS.animals, seeds, info.color, 12);
+            createCategoryGrid(contentArea, 'PLANTS / 植物', MASTER_ASSETS.plants, seeds, info.color, 18);
+
+            document.getElementById('codebook-overlay').classList.remove('hidden');
+        }
+
+        function closeCodeBook() {
+            document.getElementById('codebook-overlay').classList.add('hidden');
+        }
+
+        function createCategoryGrid(container, title, assets, allSeeds, color, offsetIndex) {
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'book-category-title';
+            titleDiv.innerText = title;
+            container.appendChild(titleDiv);
+
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'book-grid';
+
+            assets.forEach((item, localIndex) => {
+                const globalIndex = offsetIndex + localIndex;
+                const code = allSeeds[globalIndex] || '????';
+
+                const itemCol = document.createElement('div');
+                itemCol.className = 'book-item-col';
+                itemCol.innerHTML = `<span class="book-icon">${item.i}</span><span>${item.n}</span>`;
+                
+                const codeCol = document.createElement('div');
+                codeCol.className = 'book-code-col';
+                codeCol.innerText = code;
+                codeCol.style.borderColor = color;
+                codeCol.style.color = color;
+
+                gridDiv.appendChild(itemCol);
+                gridDiv.appendChild(codeCol);
+            });
+            container.appendChild(gridDiv);
         }
 
     </script>
