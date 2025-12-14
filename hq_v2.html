@@ -182,11 +182,90 @@
             return array.sort(() => Math.random() - 0.5);
         }
 
-        function generateRandomCode() {
-            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // 排除容易混淆的 I, 1, O, 0 (雖然有模糊比對，但視覺上避免也好)
-            let result = "";
-            for(let i=0; i<4; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-            return result;
+        function generateCodeBook() {
+            // 1. 設定列印樣式：每一頁都有邊框，並且強制分頁
+            let html = `<html><head><title>MISSION CODE BOOKS (ALL TEAMS)</title><style>
+                body { font-family: "Microsoft JhengHei", sans-serif; -webkit-print-color-adjust: exact; }
+                .page { 
+                    page-break-after: always; /* 關鍵：強制分頁 */
+                    padding: 40px; 
+                    border: 5px solid #000; 
+                    height: 95vh; 
+                    box-sizing: border-box; 
+                    position: relative;
+                }
+                h1 { text-align: center; border-bottom: 3px solid #000; margin-bottom: 10px; text-transform: uppercase; }
+                .team-badge { 
+                    text-align: center; font-size: 2.5rem; font-weight: 900; 
+                    background: #000; color: #fff; padding: 10px; margin-bottom: 20px; 
+                    border-radius: 8px;
+                }
+                .warning { color: red; text-align: center; font-weight: bold; margin-bottom: 20px; border: 2px solid red; padding: 5px; }
+                .grid { 
+                    display: grid; grid-template-columns: repeat(3, 1fr); 
+                    gap: 15px; font-size: 1rem; 
+                }
+                .item { 
+                    border-bottom: 1px dashed #ccc; padding: 5px; 
+                    display: flex; justify-content: space-between; align-items: center; 
+                }
+                .name { font-weight: bold; }
+                .code { font-family: 'Courier New', monospace; font-weight: 900; font-size: 1.2rem; letter-spacing: 1px;}
+                
+                /* 浮水印效果 */
+                .watermark {
+                    position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
+                    font-size: 8rem; opacity: 0.05; font-weight: bold; pointer-events: none; white-space: nowrap;
+                }
+            </style></head><body>`;
+
+            // 2. 定義四個小隊的資訊
+            const teams = ['A', 'B', 'C', 'D'];
+            const teamInfo = {
+                'A': { name: 'ALPHA TEAM', color: '#FF3333' },
+                'B': { name: 'BRAVO TEAM', color: '#33FF33' },
+                'C': { name: 'CHARLIE TEAM', color: '#3388FF' },
+                'D': { name: 'DELTA TEAM', color: '#FFFF33' }
+            };
+
+            // 3. 迴圈生成 4 個頁面
+            teams.forEach(team => {
+                const bookData = CODE_BOOKS[team]; // 抓取該小隊專屬的密碼
+                const info = teamInfo[team];
+
+                html += `
+                <div class="page">
+                    <div class="watermark">${info.name}</div>
+                    <div class="team-badge" style="color:${info.color}">${info.name}</div>
+                    <h1>專用通訊代碼本</h1>
+                    <div class="warning">⚠️ 機密文件：僅限該小隊使用，禁止出示給他隊觀看 ⚠️</div>
+                    
+                    <div class="grid">`;
+                
+                // 列印該小隊的所有物品與對應密碼
+                // 先依照物品名稱排序，方便查找
+                Object.keys(bookData).sort().forEach(itemName => {
+                    html += `
+                    <div class="item">
+                        <span class="name">${itemName}</span>
+                        <span class="code">${bookData[itemName]}</span>
+                    </div>`;
+                });
+
+                html += `
+                    </div>
+                    <div style="position: absolute; bottom: 20px; width: 100%; text-align: center; font-size: 0.8rem; color: #666;">
+                        URBAN WATCHERS TACTICAL SYSTEM - DO NOT DISTRIBUTE
+                    </div>
+                </div>`;
+            });
+
+            html += `<script>window.print();<\/script></body></html>`;
+            
+            // 4. 開啟新視窗列印
+            const printWin = window.open('', '_blank');
+            printWin.document.write(html);
+            printWin.document.close();
         }
 
         async function startNewGame() {
