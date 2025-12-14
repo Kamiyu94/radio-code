@@ -35,7 +35,7 @@
 
         .hidden { display: none !important; }
 
-        /* --- 1. 身分選擇畫面 (只會出現一次) --- */
+        /* --- 1. 身分選擇畫面 --- */
         #identity-screen {
             height: 100%; width: 100%;
             display: flex; flex-direction: column;
@@ -57,7 +57,7 @@
         /* --- 2. 密碼本檢視 (Overlay) --- */
         #codebook-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #050505; z-index: 200; overflow-y: auto; padding: 20px;
+            background: #050505; z-index: 200; overflow-y: auto; padding: 20px; padding-bottom: 80px;
             display: flex; flex-direction: column; align-items: center;
         }
         
@@ -101,7 +101,7 @@
         .screen { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-            padding: 20px; padding-top: 5vh;
+            padding: 20px; padding-top: 5vh; padding-bottom: 60px; /* 留給懸浮按鈕空間 */
             background: #000; z-index: 10;
             overflow-y: auto; 
         }
@@ -151,6 +151,17 @@
             display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--highlight);
         }
         .loading-retry { margin-top: 20px; color: #fff; border: 1px solid #666; padding: 5px 15px; font-size: 0.8rem; cursor: pointer; display: none;}
+
+        /* ★ 新增：全域懸浮重置按鈕 ★ */
+        .floating-reset-btn {
+            position: fixed; bottom: 15px; right: 15px;
+            background: rgba(0,0,0,0.8); border: 1px solid #666; color: #666;
+            padding: 8px 15px; border-radius: 20px; font-size: 0.75rem;
+            z-index: 500; cursor: pointer; backdrop-filter: blur(5px);
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .floating-reset-btn:hover { border-color: var(--danger); color: var(--danger); }
+
     </style>
 </head>
 <body>
@@ -159,6 +170,8 @@
         <div id="loading-text">CONNECTING TO SATELLITE...</div>
         <div class="loading-retry" onclick="location.reload()">RETRY CONNECTION</div>
     </div>
+
+    <div class="floating-reset-btn" onclick="clearIdentity()">⚠ 重置 / RESET</div>
 
     <div id="identity-screen" class="hidden">
         <div class="id-title">IDENTITY CHECK</div>
@@ -199,10 +212,6 @@
             <button class="my-book-btn" onclick="openMyBook()">
                 <span>📖 開啟我的密碼本</span>
             </button>
-
-            <div style="margin-top:20px; margin-bottom:20px; font-size:0.8rem; color:#444; text-decoration:underline; cursor:pointer;" onclick="clearIdentity()">
-                [ 重選小隊 / RESET IDENTITY ]
-            </div>
         </div>
 
         <div id="screen-success" class="screen hidden" style="background:#001a00;">
@@ -221,7 +230,6 @@
             <p style="color:#666; text-align:center;">WAITING FOR HQ SIGNAL</p>
             <div style="color:#444; font-size:0.8rem; margin-top:10px;">請教官在 HQ 端啟動戰局</div>
             <button class="btn" style="margin-top:20px;" onclick="location.reload()">RECONNECT</button>
-            <button class="btn" style="margin-top:20px; border-color:#444; color:#666;" onclick="clearIdentity()">RESET IDENTITY</button>
         </div>
 
     </div>
@@ -299,6 +307,9 @@
             document.getElementById('app').classList.remove('hidden');
             document.getElementById('identity-display').innerText = myIdentity + " SQUAD";
             await checkSessionAndLoadMission();
+
+            // ★ 啟動心跳偵測 (每 5 秒檢查一次是否有新戰局)
+            setInterval(checkHeartbeat, 5000);
         };
 
         // --- 5. IDENTITY LOGIC ---
@@ -318,6 +329,30 @@
         }
 
         // --- 6. MISSION LOGIC ---
+        
+        // ★ 自動檢查是否有新戰局 (防止卡死)
+        async function checkHeartbeat() {
+            const { data: sessions } = await supabase
+                .from('game_sessions')
+                .select('id')
+                .eq('is_active', true)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (sessions && sessions.length > 0) {
+                const latestId = sessions[0].id;
+                // 如果資料庫的最新 ID 與我現在的不一樣，代表 HQ 重啟了
+                if (activeSessionId && latestId !== activeSessionId) {
+                    console.log("New session detected by heartbeat!");
+                    alert("HQ 已重置戰局，系統將自動刷新！");
+                    
+                    // 清除舊身分，強制重選
+                    localStorage.removeItem('my_squad_identity');
+                    location.reload();
+                }
+            }
+        }
+
         async function checkSessionAndLoadMission() {
             const { data: sessions, error } = await supabase
                 .from('game_sessions')
@@ -333,36 +368,10 @@
                 return;
             }
 
-            const newSessionId = sessions[0].id;
-
-            // ★ 新增：自動重置邏輯 (AUTO-RESET LOGIC)
-            // 如果從資料庫抓到的 Session ID 跟本地存的不一樣，代表 HQ 已經開啟新局
-            const lastSessionId = localStorage.getItem('last_active_session_id');
-            if (lastSessionId && lastSessionId !== newSessionId) {
-                console.log("New session detected. Resetting identity.");
-                localStorage.removeItem('my_squad_identity'); // 清除身分
-                localStorage.setItem('last_active_session_id', newSessionId); // 更新 ID
-                alert("HQ 已重置戰局，請重新選擇身分！");
-                location.reload();
-                return;
-            }
-            
-            // 如果是第一次連線，也要存下這個 Session ID
-            localStorage.setItem('last_active_session_id', newSessionId);
-            activeSessionId = newSessionId;
-            
+            activeSessionId = sessions[0].id;
             const disp = document.getElementById('session-id-disp');
             if(disp) disp.innerText = activeSessionId.split('-')[0];
-
-            supabase.channel('public:game_sessions')
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_sessions', filter: `id=eq.${activeSessionId}` }, 
-                (payload) => {
-                    if (payload.new.is_active === false) {
-                        alert("MISSION TERMINATED BY HQ");
-                        location.reload();
-                    }
-                }).subscribe();
-
+            
             await loadMissionData();
         }
 
