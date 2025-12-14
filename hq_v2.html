@@ -2,537 +2,302 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HQ COMMAND CENTER (ONLINE)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FIELD TERMINAL V2 (ONLINE)</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --bg: #000; --text: #0f0; --border: #333; --highlight: #00ff41; --danger: #ff3333; }
-        body { background: var(--bg); color: var(--text); font-family: 'Consolas', monospace; margin: 0; padding: 20px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* HEADER & CONTROLS */
-        .header { border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        h1 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; }
-        
-        .control-panel { background: #111; border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-        .mode-switch { display: flex; gap: 20px; margin-bottom: 15px; align-items: center; }
-        .radio-label { cursor: pointer; display: flex; align-items: center; color: #fff; }
-        .radio-label input { margin-right: 8px; transform: scale(1.5); }
-        
-        .btn { background: #222; color: var(--highlight); border: 1px solid var(--highlight); padding: 10px 20px; font-size: 1rem; cursor: pointer; text-transform: uppercase; font-weight: bold; width: 100%; transition: 0.2s; }
-        .btn:hover { background: var(--highlight); color: #000; }
-        .btn:active { transform: scale(0.98); }
+        :root {
+            --bg-color: #000000;
+            --text-main: #e0e0e0;
+            --highlight: #00ff41;
+            --danger: #ff3333;
+            --panel-bg: #111111;
+        }
 
-        /* DASHBOARD GRID */
-        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex: 1; overflow-y: auto; align-content: start; }
-        .grid-item { border: 1px solid #444; background: #0a0a0a; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; min-height: 100px; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         
-        .grid-item.solved { background: rgba(0, 255, 65, 0.2); border-color: var(--highlight); box-shadow: 0 0 15px var(--highlight); }
-        .grid-item.solved::after { content: 'CLEARED'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg); color: var(--highlight); font-size: 1.5rem; font-weight: 900; border: 3px solid var(--highlight); padding: 5px; opacity: 0.8; pointer-events: none; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Consolas', 'Monaco', monospace;
+            margin: 0;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-        .loc-label { position: absolute; top: 5px; left: 5px; font-size: 0.7rem; color: #666; }
-        .item-icon { font-size: 3rem; margin-bottom: 5px; }
-        .item-code { font-size: 1.2rem; font-weight: bold; color: #fff; background: #222; padding: 2px 8px; border-radius: 4px; }
+        .hidden { display: none !important; }
+
+        /* --- 1. 小隊選擇選單 --- */
+        #team-selector {
+            height: 100%; width: 100%;
+            display: flex; flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
         
-        /* STATUS BAR */
-        .status-bar { margin-top: 10px; color: #888; font-size: 0.8rem; text-align: center; }
+        .menu-title { text-align: center; color: var(--highlight); margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px;}
         
-        /* LOADING OVERLAY */
-        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:99; display:none;}
-        /* QR Code Modal Styles */
-        .qr-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 200; justify-content: center; align-items: center; flex-direction: column; }
-        .qr-box { background: #111; border: 2px solid var(--highlight); padding: 30px; border-radius: 10px; text-align: center; max-width: 90%; }
-        .qr-code-img { margin: 20px auto; border: 10px solid #fff; } /* 白邊讓 QR 更容易掃 */
-        .qr-link { color: var(--highlight); display: block; margin-top: 15px; text-decoration: underline; word-break: break-all; font-size: 0.9rem; }
-        .close-btn { margin-top: 20px; background: var(--danger); color: #fff; border: none; padding: 10px 30px; font-size: 1.2rem; cursor: pointer; border-radius: 5px; }
-        .mini-qr-btn { position: absolute; top: 5px; right: 5px; background: transparent; border: 1px solid #444; color: #666; cursor: pointer; padding: 2px 6px; font-size: 0.8rem; border-radius: 4px; z-index: 10; }
-        .mini-qr-btn:hover { color: var(--highlight); border-color: var(--highlight); }
+        .team-btn {
+            width: 100%; padding: 25px; margin-bottom: 15px;
+            font-size: 1.5rem; font-weight: bold; border-radius: 10px;
+            background: #111; color: #fff; border: 2px solid #333;
+            text-align: left; position: relative; cursor: pointer;
+            transition: 0.2s;
+        }
+        .team-btn:active { transform: scale(0.98); filter: brightness(1.2); }
+        .team-btn::after { content: '>'; position: absolute; right: 20px; opacity: 0.5; }
+
+        /* --- 2. 任務主介面 --- */
+        #app { height: 100%; width: 100%; position: relative; }
+
+        .screen { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            padding: 20px; padding-top: 10vh;
+            background: #000; z-index: 10;
+        }
+
+        .input-box {
+            background: #000; border: 2px solid var(--highlight); color: var(--highlight);
+            font-size: 2rem; padding: 15px; width: 100%; max-width: 300px;
+            text-align: center; border-radius: 8px; margin-bottom: 20px; outline: none;
+            font-family: inherit; text-transform: uppercase;
+        }
+
+        .btn {
+            background: #222; border: 1px solid var(--highlight); color: var(--highlight);
+            padding: 15px 30px; font-size: 1.2rem; border-radius: 8px; cursor: pointer;
+            width: 100%; max-width: 300px; font-weight: bold;
+        }
+        .btn:active { background: var(--highlight); color: #000; }
+
+        /* 狀態畫面 */
+        .status-icon { font-size: 5rem; margin-bottom: 20px; }
+        .info-text { font-size: 1.2rem; color: #fff; margin-bottom: 10px; font-weight: bold; }
+        .comm-msg { color: #ffcc00; white-space: pre-line; text-align: center; margin-top: 20px; border: 1px dashed #444; padding: 15px; width: 100%; }
+
+        /* Loading Overlay - 請確保您的 HTML 裡有這一段 */
+        #loading {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 99;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--highlight);
+        }
+        .loading-retry { margin-top: 20px; color: #fff; border: 1px solid #666; padding: 5px 15px; font-size: 0.8rem; cursor: pointer; display: none;}
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>HQ MONITOR</h1>
-        <div style="font-size:0.8rem; color:#666;">ONLINE VER.</div>
+    <div id="loading">
+        <div id="loading-text">CONNECTING TO SATELLITE...</div>
+        <div class="loading-retry" onclick="location.reload()">RETRY CONNECTION</div>
     </div>
 
-    <div class="control-panel">
-        <button class="btn" onclick="startNewGame()">⚠ 初始化並啟動新戰局 ⚠</button>
-        <button class="btn" style="margin-top:10px; border-color:#fff; color:#fff;" onclick="generateCodeBook()">🖨️ 產生/列印 密碼對照表 (Code Book)</button>
-    </div>
-
-    <div id="dashboard" class="dashboard">
-        <div style="grid-column: 1/-1; text-align:center; color:#444; padding-top:50px;">
-            等待啟動戰局...
+    <div id="team-selector" class="hidden">
+        <h2 class="menu-title">SELECT SQUAD</h2>
+        <button class="team-btn" style="border-color:#ff3333;" onclick="selectTeam('loc_1')">🔴 ALPHA TEAM</button>
+        <button class="team-btn" style="border-color:#33ff33;" onclick="selectTeam('loc_2')">🟢 BRAVO TEAM</button>
+        <button class="team-btn" style="border-color:#3388ff;" onclick="selectTeam('loc_3')">🔵 CHARLIE TEAM</button>
+        <button class="team-btn" style="border-color:#ffff33;" onclick="selectTeam('loc_4')">🟡 DELTA TEAM</button>
+        <div style="margin-top:20px; color:#666; font-size:0.8rem; text-align:center;">
+            OR SCAN QR CODE AT LOCATION
         </div>
     </div>
 
-    <div class="status-bar" id="status-text">SYSTEM STANDBY</div>
-    <div id="loading"><div style="color:#fff; font-size:2rem;">PROCESSING...</div></div>
-    
-    <div id="qrModal" class="qr-modal">
-        <div class="qr-box">
-            <h2 id="qrTitle" style="color:var(--highlight); margin-top:0;">LOC X</h2>
-            <div id="qrCanvas"></div>
-            <a id="qrLink" href="#" target="_blank" class="qr-link">LINK</a>
-            <button class="close-btn" onclick="closeQR()">CLOSE WINDOW</button>
+    <div id="app" class="hidden">
+        
+        <div id="screen-input" class="screen">
+            <div style="font-size:0.8rem; color:#666; width:100%; text-align:right; margin-bottom:20px;">ONLINE: <span id="session-id-disp">...</span></div>
+            <div class="status-icon" id="target-icon">❓</div>
+            <div class="info-text" id="target-name">Loading...</div>
+            <p style="color:#888; margin-bottom:30px;">REQUEST CODE FROM ALLY</p>
+            <input type="text" id="code-input" class="input-box" placeholder="CODE" maxlength="4">
+            <button class="btn" onclick="submitCode()">VERIFY</button>
+            <div id="error-msg" style="color:red; margin-top:15px; display:none;">ACCESS DENIED</div>
         </div>
+
+        <div id="screen-success" class="screen hidden" style="background:#001a00;">
+            <div class="status-icon">✅</div>
+            <div class="info-text" style="color:var(--highlight);">ACCESS GRANTED</div>
+            <div style="margin-top:20px; width:100%; max-width:320px;">
+                <div style="color:#888; font-size:0.8rem;">NEXT OBJECTIVE</div>
+                <div id="next-hint" class="info-text" style="font-size:1.5rem;">...</div>
+            </div>
+            <div class="comm-msg" id="comm-msg">...</div>
+        </div>
+
+        <div id="screen-wait" class="screen hidden">
+            <div class="status-icon">⏳</div>
+            <div class="info-text">SYSTEM STANDBY</div>
+            <p style="color:#666; text-align:center;">WAITING FOR HQ SIGNAL</p>
+            <div style="color:#444; font-size:0.8rem; margin-top:10px;">請教官在 HQ 端啟動戰局</div>
+            <button class="btn" style="margin-top:20px;" onclick="location.reload()">RECONNECT</button>
+        </div>
+
     </div>
 
     <script>
-        // --- 1. CONFIGURATION (請填入你的 Supabase 資料) ---
+        // --- 1. CONFIGURATION ---
         const SUPABASE_URL = 'https://lqhgpeuoejdyodanvauv.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxaGdwZXVvZWpkeW9kYW52YXV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDUyMzAsImV4cCI6MjA3OTA4MTIzMH0.my3U8mN06xm79ArFamTpWydf7rYFXOKT5-ooKmqb_O4';
-        
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- 2. ASSET DATA (完整四小隊資料) ---
+        let activeSessionId = null;
+        let currentLocationId = null;
+        let currentMissionData = null;
 
-        // (1) 共通物品清單：這是四個小隊書本裡都有的物品，確保遊戲順暢
-        const ITEMS_LIST = [
-            // 水果類 (12種)
-            "葡萄", "西瓜", "橘子", "檸檬", "蘋果", "梨子", 
-            "椰子", "芒果", "哈密瓜", "番茄", "草莓", "鳳梨",
-            // 動物類 (6種)
-            "獅子", "老鷹", "鱷魚", "貓頭鷹", "長頸鹿", "袋鼠",
-            // 植物類 (10種)
-            "向日葵", "仙人掌", "竹子", "扶桑花", "楓葉", 
-            "薰衣草", "薄荷", "松樹", "雛菊", "貝殼"
-        ];
+        // 安全機制：超時顯示重試
+        setTimeout(() => {
+            const retryBtn = document.querySelector('.loading-retry');
+            if(retryBtn) retryBtn.style.display = 'block';
+        }, 5000);
 
-        // (2) 密碼種子：已包含 A, B, C, D 四小隊完整密碼
-        const SEEDS = {
-            // Alpha Team (A)
-            A: [
-                "L2Z5", "P8K3", "S4M1", "T4W7", "X4T9", "Q4Y9", 
-                "B1D6", "K7X1", "V2C5", "O6A4", "U9E2", "Z3N7",
-                "C7M1", "D5S2", "X2U5", "R9S6", "N3Y0", "G6P9",
-                "G2V4", "B8H7", "L6P2", "F5G8", "Z7D5", 
-                "K3I6", "E2A4", "J3R6", "C6U3", "P8M5"
-            ],
-            // Bravo Team (B)
-            B: [
-                "L3T6", "D8M3", "Z8A4", "W5Y3", "C5K1", "B2H9",
-                "I1R8", "J9S0", "D1E5", "B6C9", "G7Q5", "U6Q4",
-                "P5Q9", "B2C8", "H9I2", "D7E1", "W6X3", "U4V0",
-                "F3G8", "H5I0", "U7V1", "L6N3", "Z7D5",
-                "Z5A3", "B9C4", "O8P2", "W2Y6", "D1E8"
-            ],
-            // Charlie Team (C)
-            C: [
-                "G5H0", "K1L9", "M6N4", "C9D1", "Q0R2", "A4B7",
-                "E2F6", "U7V9", "I8J3", "W2X5", "V1G5", "O3P7",
-                "C2D8", "L0M9", "N4O6", "T5U0", "V9W3", "D0E5",
-                "L2M7", "J6K8", "A3B6", "H1I5", "D0E4",
-                "V1W6", "A9B3", "F9G2", "X7Z2", "C0D5"
-            ],
-            // Delta Team (D)
-            D: [
-                "G6I4", "L1M7", "W7Z1", "P9R3", "C8D0", "Q4Y9",
-                "C2D6", "K7X1", "U0V6", "E8F3", "N5O2", "S4T8",
-                "C9E4", "U8V3", "M4N9", "W5X0", "S1T7", "C6D2",
-                "O3P5", "Q8R1", "S2T6", "F5G8", "U7V4",
-                "Z9A3", "D1E6", "L4M9", "B8C2", "F5G0"
-            ]
-        };
-
-        // (3) 自動生成密碼對照表 (CODE_BOOKS)
-        const CODE_BOOKS = { 'A': {}, 'B': {}, 'C': {}, 'D': {} };
-        ITEMS_LIST.forEach((item, index) => {
-            if(index < SEEDS.A.length) CODE_BOOKS.A[item] = SEEDS.A[index];
-            if(index < SEEDS.B.length) CODE_BOOKS.B[item] = SEEDS.B[index];
-            if(index < SEEDS.C.length) CODE_BOOKS.C[item] = SEEDS.C[index];
-            if(index < SEEDS.D.length) CODE_BOOKS.D[item] = SEEDS.D[index];
-        });
-
-        // (4) 遊戲資產 (MASTER_ASSETS) - 僅包含安全名單內的物品
-        const MASTER_ASSETS = {
-            fruits: [
-                {n:"葡萄", i:"🍇"}, {n:"西瓜", i:"🍉"}, {n:"橘子", i:"🍊"}, {n:"檸檬", i:"🍋"},
-                {n:"蘋果", i:"🍎"}, {n:"梨子", i:"🍐"}, {n:"椰子", i:"🥥"}, {n:"芒果", i:"🥭"},
-                {n:"哈密瓜", i:"🍈"}, {n:"番茄", i:"🍅"}, {n:"草莓", i:"🍓"}, {n:"鳳梨", i:"🍍"}
-            ],
-            animals: [
-                {n:"獅子", i:"🦁"}, {n:"老鷹", i:"🦅"}, {n:"鱷魚", i:"🐊"},
-                {n:"貓頭鷹", i:"🦉"}, {n:"長頸鹿", i:"🦒"}, {n:"袋鼠", i:"🦘"}
-            ],
-            plants: [
-                {n:"向日葵", i:"🌻"}, {n:"仙人掌", i:"🌵"}, {n:"竹子", i:"🎋"}, {n:"扶桑花", i:"🌺"},
-                {n:"楓葉", i:"🍁"}, {n:"薰衣草", i:"💐"}, {n:"薄荷", i:"🌿"}, {n:"松樹", i:"🌲"},
-                {n:"雛菊", i:"🌼"}, {n:"貝殼", i:"🐚"}
-            ]
-        };
-
-        // --- 3. LOGIC HELPERS ---
-
-        // 1. 洗牌演算法 (Fisher-Yates Shuffle)
-        function shuffle(array) {
-            let currentIndex = array.length, randomIndex;
-            while (currentIndex != 0) {
-                randomIndex = Math.floor(Math.random() * currentIndex);
-                currentIndex--;
-                [array[currentIndex], array[randomIndex]] = [
-                    array[randomIndex], array[currentIndex]];
-            }
-            return array;
+        // Helper: 安全隱藏 loading (避免找不到物件報錯)
+        function hideLoading() {
+            const el = document.getElementById('loading');
+            if (el) el.style.display = 'none';
         }
 
-        // 2. 隨機代碼產生器 (Fallback 用)
-        function generateRandomCode() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let result = '';
-            for (let i = 0; i < 4; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return result;
-        }
+        // --- 2. INITIALIZATION ---
+        window.onload = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            currentLocationId = urlParams.get('id');
 
-        // --- 4. CORE FUNCTIONS ---
-
-        async function startNewGame() {
-            if(!confirm("⚠️ 確定要啟動新戰局？\n這將會重置目前所有的連線進度！")) return;
-            
-            document.getElementById('loading').style.display = 'flex';
-            
-            // --- 1. Create Session ---
-            const { data: session, error: sessionError } = await supabase.from('game_sessions').insert([{ is_active: true }]).select().single();
-            
-            if(sessionError) { 
-                document.getElementById('loading').style.display = 'none';
-                alert(`ERROR: 無法創建戰局！\n${sessionError.message}`); 
-                console.error(sessionError); 
-                return; 
-            }
-            
-            activeSessionId = session.id;
-
-            // --- 2. Prepare Data (Shuffle Items) ---
-            const shuffledFruits = shuffle([...MASTER_ASSETS.fruits]);
-            const shuffledAnimals = shuffle([...MASTER_ASSETS.animals]);
-            const shuffledPlants = shuffle([...MASTER_ASSETS.plants]);
-
-            const missions = [
-                // Phase 1 (Fruits)
-                { id: 'loc_1', cat: 'fruits', hint: '前往 LOC 5', comm: '呼叫 B 小隊(CH2)', target_book: 'B' }, 
-                { id: 'loc_2', cat: 'fruits', hint: '前往 LOC 7', comm: '呼叫 A 小隊(CH1)', target_book: 'A' }, 
-                { id: 'loc_3', cat: 'fruits', hint: '前往 LOC 6', comm: '呼叫 D 小隊(CH4)', target_book: 'D' }, 
-                { id: 'loc_4', cat: 'fruits', hint: '前往 LOC 8', comm: '呼叫 C 小隊(CH3)', target_book: 'C' }, 
-                // Phase 2 (Animals)
-                { id: 'loc_5', cat: 'animals', hint: '前往 LOC 9',  comm: '呼叫 C 小隊(CH3)', target_book: 'C' },
-                { id: 'loc_6', cat: 'animals', hint: '前往 LOC 11', comm: '呼叫 D 小隊(CH4)', target_book: 'D' },
-                { id: 'loc_7', cat: 'animals', hint: '前往 LOC 10', comm: '呼叫 A 小隊(CH1)', target_book: 'A' },
-                { id: 'loc_8', cat: 'animals', hint: '前往 LOC 12', comm: '呼叫 B 小隊(CH2)', target_book: 'B' },
-                // Phase 3 (Plants)
-                { id: 'loc_9',  cat: 'plants', hint: 'MISSION COMPLETE', comm: '回報 HQ', target_book: 'B' },
-                { id: 'loc_10', cat: 'plants', hint: 'MISSION COMPLETE', comm: '回報 HQ', target_book: 'A' },
-                { id: 'loc_11', cat: 'plants', hint: 'MISSION COMPLETE', comm: '回報 HQ', target_book: 'D' },
-                { id: 'loc_12', cat: 'plants', hint: 'MISSION COMPLETE', comm: '回報 HQ', target_book: 'C' }
-            ];
-
-            const payload = missions.map((m, idx) => {
-                let asset;
-                if(m.cat === 'fruits') asset = shuffledFruits.pop();
-                else if(m.cat === 'animals') asset = shuffledAnimals.pop();
-                else asset = shuffledPlants.pop();
-
-                // ★ 強制使用密碼本
-                let code = CODE_BOOKS[m.target_book][asset.n];
-                
-                if(!code) {
-                    console.error(`Missing code for ${asset.n} in Book ${m.target_book}`);
-                    code = generateRandomCode(); 
-                }
-
-                return {
-                    session_id: activeSessionId,
-                    location_id: m.id,
-                    name: asset.n,
-                    icon: asset.i,
-                    code: code,
-                    category: m.cat,
-                    next_hint: m.hint,
-                    comm_msg: m.comm
-                };
-            });
-
-            // --- 3. Upload ---
-            const { error: missionError } = await supabase.from('mission_states').insert(payload);
-            
-            if(missionError) {
-                document.getElementById('loading').style.display = 'none';
-                alert(`ERROR: 無法上傳任務！\n${missionError.message}`);
-                console.error(missionError);
+            // 情況 A：網址沒有 ID，顯示選單
+            if (!currentLocationId) {
+                hideLoading();
+                document.getElementById('team-selector').classList.remove('hidden');
                 return;
             }
-            
-            // --- 4. Finish ---
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('status-text').innerText = `SESSION ACTIVE: ${activeSessionId.split('-')[0]}...`;
-            
-            renderDashboard(payload);
-            startListening();
+
+            // 情況 B：有 ID，進入主程式
+            document.getElementById('app').classList.remove('hidden');
+            await checkSessionAndLoadMission();
+        };
+
+        function selectTeam(id) {
+            window.location.href = `mission_v2.html?id=${id}`;
         }
 
-        function renderDashboard(data) {
-            const container = document.getElementById('dashboard');
-            container.innerHTML = '';
-            
-            const order = ['loc_1','loc_2','loc_3','loc_4','loc_5','loc_6','loc_7','loc_8','loc_9','loc_10','loc_11','loc_12'];
-            
-            data.sort((a,b) => order.indexOf(a.location_id) - order.indexOf(b.location_id));
+        async function checkSessionAndLoadMission() {
+            // A. 找最新的活躍戰局
+            const { data: sessions, error } = await supabase
+                .from('game_sessions')
+                .select('id')
+                .eq('is_active', true)
+                .order('created_at', { ascending: false })
+                .limit(1);
 
-            data.forEach(item => {
-                const div = document.createElement('div');
-                div.className = `grid-item ${item.is_solved ? 'solved' : ''}`;
-                div.id = `card-${item.location_id}`;
-                div.innerHTML = `
-                    <div class="loc-label">${item.location_id.toUpperCase()}</div>
-                    <button class="mini-qr-btn" onclick="generateQR('${item.location_id}')">📱 QR</button>
-                    <div class="item-icon">${item.icon}</div>
-                    <div class="item-code">${item.code}</div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        let currentChannel = null;
-
-        function startListening() {
-            if (currentChannel) {
-                supabase.removeChannel(currentChannel);
+            // 連線失敗或無戰局
+            if (error || !sessions || sessions.length === 0) {
+                console.log("No active session found.");
+                showScreen('screen-wait'); 
+                hideLoading();
+                return;
             }
 
-            console.log(`📡 啟動監聽... 目標 Session ID: ${activeSessionId}`);
+            activeSessionId = sessions[0].id;
+            const disp = document.getElementById('session-id-disp');
+            if(disp) disp.innerText = activeSessionId.split('-')[0];
 
-            currentChannel = supabase.channel('room-global')
-            .on(
-                'postgres_changes', 
-                { 
-                    event: 'UPDATE', 
-                    schema: 'public', 
-                    table: 'mission_states' 
-                }, 
+            // B. 監聽戰局重置
+            supabase.channel('public:game_sessions')
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_sessions', filter: `id=eq.${activeSessionId}` }, 
                 (payload) => {
-                    console.log("📨 收到變更訊號！", payload);
-
-                    if (payload.new.session_id !== activeSessionId) {
-                        console.log("Ignoring update from other session.");
-                        return;
+                    if (payload.new.is_active === false) {
+                        alert("MISSION TERMINATED BY HQ");
+                        location.reload();
                     }
+                }).subscribe();
 
-                    const updated = payload.new;
-                    if (updated.is_solved) {
-                        const card = document.getElementById(`card-${updated.location_id}`);
-                        if (card) {
-                            console.log(`✅ 命中！更新卡片: ${updated.location_id}`);
-                            card.classList.add('solved');
-                        }
-                    }
-                }
-            )
-            .subscribe((status) => {
-                console.log(`📶 連線狀態: ${status}`);
-                if (status === 'SUBSCRIBED') {
-                    console.log("🚀 即時監控已連線！現在不需要 F5 了！");
-                }
-            });
+            // C. 載入任務資料
+            await loadMissionData();
         }
 
-        // On Load
-        window.onload = async () => {
-             const { data: sessions } = await supabase.from('game_sessions').select('id').eq('is_active', true).order('created_at', { ascending: false }).limit(1);
-             if(sessions && sessions.length > 0) {
-                 activeSessionId = sessions[0].id;
-                 const { data: missions } = await supabase.from('mission_states').select('*').eq('session_id', activeSessionId);
-                 if(missions) {
-                     renderDashboard(missions);
-                     startListening();
-                     document.getElementById('status-text').innerText = `RESUMED SESSION: ${activeSessionId.split('-')[0]}...`;
-                 }
-             }
+        async function loadMissionData() {
+            const { data, error } = await supabase
+                .from('mission_states')
+                .select('*')
+                .eq('session_id', activeSessionId)
+                .eq('location_id', currentLocationId)
+                .single();
+
+            // 找不到資料
+            if (error || !data) {
+                console.error("Mission data not found", error);
+                hideLoading();
+                alert("⚠ 無法取得任務資料\n\n可能原因：\n1. HQ 尚未初始化新戰局\n2. 該地點 ID 無效");
+                showScreen('screen-wait');
+                return;
+            }
+
+            currentMissionData = data;
+            hideLoading();
+
+            // D. 判斷是否已解開
+            if (data.is_solved) {
+                showSuccess(data);
+            } else {
+                showInput(data);
+            }
         }
 
-        function generateQR(locId) {
-            const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
-            const fullUrl = `${baseUrl}/mission_v2.html?id=${locId}`;
-
-            document.getElementById('qrTitle').innerText = `SCAN TO ACCESS: ${locId.toUpperCase()}`;
-            document.getElementById('qrLink').innerText = fullUrl;
-            document.getElementById('qrLink').href = fullUrl;
-            document.getElementById('qrCanvas').innerHTML = "";
-
-            new QRCode(document.getElementById("qrCanvas"), {
-                text: fullUrl,
-                width: 250,
-                height: 250,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-
-            document.getElementById('qrModal').style.display = 'flex';
+        function showInput(data) {
+            showScreen('screen-input');
+            document.getElementById('target-icon').innerText = data.icon;
+            document.getElementById('target-name').innerText = data.name;
+            document.getElementById('code-input').value = '';
+            document.getElementById('error-msg').style.display = 'none';
         }
 
-        function closeQR() {
-            document.getElementById('qrModal').style.display = 'none';
+        function showSuccess(data) {
+            showScreen('screen-success');
+            document.getElementById('next-hint').innerText = data.next_hint;
+            document.getElementById('comm-msg').innerText = data.comm_msg;
         }
 
-        // --- 5. PRINT FUNCTION (修正版：統一裁切線顏色) ---
-        function generateCodeBook() {
-            // 1. 準備圖示對照表
-            const iconMap = {};
-            Object.values(MASTER_ASSETS).forEach(category => {
-                category.forEach(item => {
-                    iconMap[item.n] = item.i;
-                });
-            });
+        async function submitCode() {
+            const input = document.getElementById('code-input').value.toUpperCase().trim();
+            const correctCode = currentMissionData.code;
 
-            // 2. 設定列印樣式
-            let html = `<html><head><title>MISSION CODE BOOKS (GRID VIEW)</title><style>
-                @page { size: A4; margin: 0; }
+            if (input === correctCode) {
+                // 1. 更新資料庫
+                document.getElementById('loading').style.display = 'flex';
+                const { error } = await supabase
+                    .from('mission_states')
+                    .update({ is_solved: true, solved_at: new Date() })
+                    .eq('id', currentMissionData.id);
+
+                if (error) {
+                    alert("NETWORK ERROR: 無法回傳數據");
+                    hideLoading();
+                    return;
+                }
+
+                // 2. 顯示成功
+                currentMissionData.is_solved = true; 
+                showSuccess(currentMissionData);
+                hideLoading();
+
+            } else {
+                // 錯誤處理
+                const errEl = document.getElementById('error-msg');
+                errEl.style.display = 'block';
+                errEl.innerText = "ACCESS DENIED";
                 
-                body { 
-                    font-family: "Microsoft JhengHei", "Heiti TC", sans-serif; 
-                    -webkit-print-color-adjust: exact; 
-                    margin: 0; padding: 10mm; 
-                    height: 100vh; 
-                    box-sizing: border-box;
-                    display: flex; 
-                    flex-wrap: wrap; 
-                    justify-content: space-between;
-                    align-content: space-between;
-                }
-                
-                .quarter-page { 
-                    width: calc(50% - 2mm); 
-                    height: calc(50% - 2mm); 
-                    border: 1px dashed #666; /* ★ 修改這裡：統一用深灰色，確保看得清楚 */
-                    box-sizing: border-box; 
-                    padding: 8px;
-                    position: relative;
-                    display: flex;
-                    flex-direction: column;
-                    border-radius: 8px;
-                    overflow: hidden; 
-                }
+                const box = document.getElementById('code-input');
+                box.style.borderColor = 'red';
+                setTimeout(() => box.style.borderColor = '#00ff41', 500);
+            }
+        }
 
-                .header-section {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    border-bottom: 2px solid #000;
-                    padding-bottom: 4px;
-                    margin-bottom: 4px;
-                    height: 35px;
-                }
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
+            const el = document.getElementById(id);
+            if(el) el.classList.remove('hidden');
+        }
 
-                .team-name { 
-                    font-size: 1.2rem; font-weight: 900; color: #fff; 
-                    padding: 2px 12px; border-radius: 4px; 
-                    text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
-                }
-                
-                .warning { 
-                    font-size: 0.6rem; color: #666; font-weight: bold;
-                    text-align: right; line-height: 1.1;
-                }
-
-                .grid-container { 
-                    display: grid; 
-                    grid-template-columns: repeat(4, 1fr); 
-                    grid-template-rows: repeat(7, 1fr);    
-                    gap: 2px;
-                    flex: 1; 
-                }
-
-                .item { 
-                    border: 1px solid #ddd; 
-                    border-radius: 4px;
-                    display: flex; 
-                    flex-direction: column; 
-                    justify-content: center; 
-                    align-items: center; 
-                    text-align: center;
-                    background: rgba(255,255,255,0.8);
-                }
-                
-                .item-top { font-size: 0.75rem; line-height: 1; margin-bottom: 2px; white-space: nowrap; }
-                .item-icon { font-size: 0.9rem; margin-right: 2px; }
-                .item-name { font-weight: bold; }
-                
-                .item-code { 
-                    font-family: 'Consolas', monospace; 
-                    font-weight: 900; 
-                    font-size: 1rem; 
-                    color: #000;
-                    line-height: 1;
-                    letter-spacing: -0.5px;
-                }
-                
-                .watermark {
-                    position: absolute; top: 55%; left: 50%; 
-                    transform: translate(-50%, -50%) rotate(0deg);
-                    font-size: 8rem; opacity: 0.04; 
-                    font-weight: 900; pointer-events: none; 
-                    z-index: 0; color: #000;
-                }
-
-                .footer {
-                    font-size: 0.5rem; text-align: center; margin-top: 4px; color: #aaa; height: 10px;
-                }
-
-                /* ★ 我把原本這邊「改變邊框顏色」的程式碼刪掉了，這樣 D 小隊就不會變成看不見的黃色邊框了 */
-                
-            </style></head><body>`;
-
-            const teams = ['A', 'B', 'C', 'D'];
-            const teamInfo = {
-                'A': { name: 'ALPHA', color: '#CC0000' },
-                'B': { name: 'BRAVO', color: '#009900' },
-                'C': { name: 'CHARLIE', color: '#0033CC' },
-                'D': { name: 'DELTA', color: '#CCAA00' }
-            };
-
-            teams.forEach(team => {
-                const bookData = CODE_BOOKS[team];
-                if (!bookData) return;
-                const info = teamInfo[team];
-
-                html += `
-                <div class="quarter-page" data-team="${team}">
-                    <div class="watermark">${team}</div>
-                    
-                    <div class="header-section">
-                        <div class="team-name" style="background:${info.color}">${info.name}</div>
-                        <div class="warning">CONFIDENTIAL<br>EYES ONLY</div>
-                    </div>
-                    
-                    <div class="grid-container">`;
-                
-                Object.keys(bookData).sort().forEach(itemName => {
-                    const icon = iconMap[itemName] || ''; 
-                    html += `
-                    <div class="item">
-                        <div class="item-top">
-                            <span class="item-icon">${icon}</span>
-                            <span class="item-name">${itemName}</span>
-                        </div>
-                        <div class="item-code">${bookData[itemName]}</div>
-                    </div>`;
-                });
-
-                html += `
-                    </div>
-                    <div class="footer">CITY GUARDIAN TACTICAL - ${info.name} SQUAD</div>
-                </div>`;
-            });
-
-            html += `<script>window.print();<\/script></body></html>`;
-            
-            const printWin = window.open('', '_blank');
-            printWin.document.write(html);
-            printWin.document.close();
-        }    
     </script>
 </body>
 </html>
