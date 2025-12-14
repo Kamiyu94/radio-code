@@ -14,10 +14,10 @@
             --cool: #00ffff;
             --panel-bg: #111111;
             --border: #333;
-            --alpha: #CC0000;
-            --bravo: #009900;
-            --charlie: #0033CC;
-            --delta: #CCAA00;
+            --alpha: #ff3333;
+            --bravo: #33cc33;
+            --charlie: #3388ff;
+            --delta: #ffff33;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -65,34 +65,29 @@
             color: #fff; margin-bottom: 20px; border-radius: 8px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
         }
         
-        /* 密碼本 Grid 排版 */
-        .book-grid {
-            display: grid;
-            grid-template-columns: 1fr auto; /* 左邊物品名稱，右邊密碼 */
-            gap: 10px;
+        .book-category-title {
             width: 100%; max-width: 350px;
-            margin-bottom: 30px;
+            color: #666; font-size: 0.8rem; margin-top: 15px; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 2px;
+        }
+
+        .book-grid {
+            display: grid; grid-template-columns: 1fr auto; gap: 8px;
+            width: 100%; max-width: 350px; margin-bottom: 10px;
         }
         
-        .book-row {
-            display: contents; /* 讓子元素直接參與 grid */
-            border-bottom: 1px solid #333;
-        }
-
         .book-item-col {
-            display: flex; align-items: center; padding: 12px;
-            background: rgba(255,255,255,0.05); border-radius: 6px 0 0 6px;
-            font-size: 1.1rem;
+            display: flex; align-items: center; padding: 10px;
+            background: rgba(255,255,255,0.05); border-radius: 6px 0 0 6px; font-size: 1rem;
         }
-        .book-icon { font-size: 1.6rem; margin-right: 12px; }
+        .book-icon { font-size: 1.5rem; margin-right: 12px; }
 
         .book-code-col {
-            display: flex; align-items: center; justify-content: center; padding: 12px;
-            background: rgba(0,0,0,0.3); border: 2px solid var(--highlight); border-radius: 0 6px 6px 0;
-            font-family: 'Consolas', monospace; font-size: 1.4rem; font-weight: 900; color: var(--highlight); letter-spacing: 1px;
+            display: flex; align-items: center; justify-content: center; padding: 10px; min-width: 100px;
+            background: rgba(0,0,0,0.3); border: 1px solid var(--highlight); border-radius: 0 6px 6px 0;
+            font-family: 'Consolas', monospace; font-size: 1.2rem; font-weight: 900; color: var(--highlight); letter-spacing: 1px;
         }
 
-        .back-btn { margin-top: auto; /* 推到底部 */ background: #333; color: #ccc; border: none; }
+        .back-btn { margin-top: 30px; margin-bottom: 30px; background: #333; color: #ccc; border: none; }
 
         /* --- 舊有任務介面元件 --- */
         .input-box {
@@ -153,7 +148,7 @@
         <div id="book-header" class="book-header">SQUAD BOOK</div>
         <p style="color:#666; font-size:0.8rem; margin-bottom:20px;">CONFIDENTIAL // EYES ONLY</p>
         
-        <div id="book-grid-container" class="book-grid"></div>
+        <div id="book-content-area" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
 
         <button class="btn back-btn" onclick="showScreen('squad-menu')">← BACK TO MENU</button>
     </div>
@@ -215,21 +210,38 @@
     </div>
 
     <script>
-        // --- 1. 離線任務資料 (Offline Data) ---
+        // --- 1. 完整離線數據庫 (FULL DATABASE) ---
+        // 這些資料必須跟 HQ 端一模一樣，才能當作查詢使用
+        const MASTER_ASSETS = {
+            fruits: [{n:"葡萄", i:"🍇"}, {n:"西瓜", i:"🍉"}, {n:"橘子", i:"🍊"}, {n:"檸檬", i:"🍋"}, {n:"蘋果", i:"🍎"}, {n:"梨子", i:"🍐"}, {n:"椰子", i:"🥥"}, {n:"芒果", i:"🥭"}, {n:"哈密瓜", i:"🍈"}, {n:"番茄", i:"🍅"}, {n:"草莓", i:"🍓"}, {n:"鳳梨", i:"🍍"}],
+            animals: [{n:"獅子", i:"🦁"}, {n:"老鷹", i:"🦅"}, {n:"鱷魚", i:"🐊"}, {n:"貓頭鷹", i:"🦉"}, {n:"長頸鹿", i:"🦒"}, {n:"袋鼠", i:"🦘"}],
+            plants: [{n:"向日葵", i:"🌻"}, {n:"仙人掌", i:"🌵"}, {n:"竹子", i:"🎋"}, {n:"扶桑花", i:"🌺"}, {n:"楓葉", i:"🍁"}, {n:"薰衣草", i:"💐"}, {n:"薄荷", i:"🌿"}, {n:"松樹", i:"🌲"}, {n:"雛菊", i:"🌼"}, {n:"貝殼", i:"🐚"}]
+        };
+
+        const TEAM_SEEDS = {
+            A: ["L2Z5", "P8K3", "S4M1", "T4W7", "X4T9", "Q4Y9", "B1D6", "K7X1", "V2C5", "O6A4", "U9E2", "Z3N7", "C7M1", "D5S2", "X2U5", "R9S6", "N3Y0", "G6P9", "G2V4", "B8H7", "L6P2", "F5G8", "Z7D5", "K3I6", "E2A4", "J3R6", "C6U3", "P8M5"],
+            B: ["L3T6", "D8M3", "Z8A4", "W5Y3", "C5K1", "B2H9", "I1R8", "J9S0", "D1E5", "B6C9", "G7Q5", "U6Q4", "P5Q9", "B2C8", "H9I2", "D7E1", "W6X3", "U4V0", "F3G8", "H5I0", "U7V1", "L6N3", "Z7D5", "Z5A3", "B9C4", "O8P2", "W2Y6", "D1E8"],
+            C: ["G5H0", "K1L9", "M6N4", "C9D1", "Q0R2", "A4B7", "E2F6", "U7V9", "I8J3", "W2X5", "V1G5", "O3P7", "C2D8", "L0M9", "N4O6", "T5U0", "V9W3", "D0E5", "L2M7", "J6K8", "A3B6", "H1I5", "D0E4", "V1W6", "A9B3", "F9G2", "X7Z2", "C0D5"],
+            D: ["G6I4", "L1M7", "W7Z1", "P9R3", "C8D0", "Q4Y9", "C2D6", "K7X1", "U0V6", "E8F3", "N5O2", "S4T8", "C9E4", "U8V3", "M4N9", "W5X0", "S1T7", "C6D2", "O3P5", "Q8R1", "S2T6", "F5G8", "U7V4", "Z9A3", "D1E6", "L4M9", "B8C2", "F5G0"]
+        };
+
+        // 扁平化的物品清單，用於對應 Index
+        const ITEMS_FLAT = [
+            ...MASTER_ASSETS.fruits,
+            ...MASTER_ASSETS.animals,
+            ...MASTER_ASSETS.plants
+        ];
+
+        // --- 2. 任務資料 (Mission Data) ---
         const missions = {
-            // Phase 1: Fruits
             'loc_1': { i: '🍌', n: '香蕉', c: 'A3O7', cat: 'fruits', next: '前往 LOC 5', comm: '切換至 [主頻 CH1 / 備頻 CH3]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'B' }, 
             'loc_2': { i: '🍎', n: '蘋果', c: 'X4T9', cat: 'fruits', next: '前往 LOC 7', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。', target_book: 'A' }, 
             'loc_3': { i: '🥝', n: '奇異果', c: 'J6H2', cat: 'fruits', next: '前往 LOC 6', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。', target_book: 'D' }, 
             'loc_4': { i: '🍓', n: '草莓', c: 'V1G5', cat: 'fruits', next: '前往 LOC 8', comm: '切換至 [主頻 CH2 / 備頻 CH4]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'C' }, 
-            
-            // Phase 2: Animals
             'loc_5': { i: '🐺', n: '狼', c: 'F6B2', cat: 'animals', next: '前往 LOC 9', comm: '切換至 [主頻 CH1 / 備頻 CH3]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'C' }, 
             'loc_6': { i: '🦁', n: '獅子', c: 'C7M1', cat: 'animals', next: '前往 LOC 11', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。', target_book: 'D' }, 
             'loc_7': { i: '🐻', n: '熊', c: 'R3Z5', cat: 'animals', next: '前往 LOC 10', comm: '切換至 [主頻 CH2 / 備頻 CH4]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'A' }, 
             'loc_8': { i: '🐯', n: '老虎', c: 'Y5N8', cat: 'animals', next: '前往 LOC 12', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。', target_book: 'B' }, 
-
-            // Phase 3: Plants
             'loc_9': { i: '🍀', n: '幸運草', c: 'N9T4', cat: 'plants', next: 'MISSION COMPLETE', comm: '切換至 [救援頻道] 回報 HQ。', target_book: 'B' }, 
             'loc_10': { i: '🌵', n: '仙人掌', c: 'H5I0', cat: 'plants', next: 'MISSION COMPLETE', comm: '切換至 [救援頻道] 回報 HQ。', target_book: 'A' }, 
             'loc_11': { i: '🌴', n: '椰子樹', c: 'C5Y9', cat: 'plants', next: 'MISSION COMPLETE', comm: '切換至 [救援頻道] 回報 HQ。', target_book: 'D' }, 
@@ -245,7 +257,7 @@
         const teamColors = { 'A': 'var(--alpha)', 'B': 'var(--bravo)', 'C': 'var(--charlie)', 'D': 'var(--delta)' };
         const teamNames = { 'A': 'ALPHA SQUAD', 'B': 'BRAVO SQUAD', 'C': 'CHARLIE SQUAD', 'D': 'DELTA SQUAD' };
 
-        // --- 2. STATE MANAGEMENT ---
+        // --- 3. STATE MANAGEMENT ---
         const urlParams = new URLSearchParams(window.location.search);
         const missionId = urlParams.get('id');
         let missionData = null;
@@ -254,30 +266,15 @@
         let wrongAttempts = parseInt(localStorage.getItem(`attempts_${missionId}`)) || 0;
         let usedRescueCodes = JSON.parse(localStorage.getItem('used_rescue')) || [];
 
-        // --- 3. HELPER FUNCTION: 整理離線密碼本 ---
-        // 這個函式會把上面的 missions 資料，自動整理成四本密碼書
-        function organizeOfflineBooks() {
-            const books = { A: [], B: [], C: [], D: [] };
-            Object.values(missions).forEach(m => {
-                if (books[m.target_book]) {
-                    books[m.target_book].push({ icon: m.i, name: m.n, code: m.c });
-                }
-            });
-            // 這裡可以選擇要不要排序，目前先不排序，維持 Phase 1,2,3 的順序
-            return books;
-        }
-        const offlineBooks = organizeOfflineBooks();
-
-
-        // --- 4. INITIALIZATION (主要邏輯修改) ---
+        // --- 4. INITIALIZATION ---
         window.onload = function() {
-            // 如果網址沒有帶 ID，顯示小隊選擇選單
+            // 如果網址沒有帶 ID，顯示小隊選擇選單 (密碼本入口)
             if (!missionId || !missions[missionId]) {
                 showScreen('squad-menu');
                 return;
             }
 
-            // 如果有帶 ID，執行原本的任務流程
+            // 如果有帶 ID，執行任務流程
             missionData = missions[missionId];
 
             if (globalStatus === 'LOCKED') {
@@ -289,56 +286,70 @@
             }
         };
 
-        // --- 5. UI FUNCTIONS (新功能) ---
+        // --- 5. UI FUNCTIONS (密碼本邏輯) ---
 
-        // 顯示切換螢幕的通用函式
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
-            window.scrollTo(0, 0); // 切換畫面時捲回頂部
+            window.scrollTo(0, 0); 
         }
 
-        // 顯示特定小隊的密碼本
         function showCodeBook(teamId) {
-            const bookData = offlineBooks[teamId];
+            const seeds = TEAM_SEEDS[teamId];
             const color = teamColors[teamId];
             const name = teamNames[teamId];
-            const container = document.getElementById('book-grid-container');
+            const contentArea = document.getElementById('book-content-area');
             const header = document.getElementById('book-header');
 
-            // 設定標題樣式
-            header.innerText = name + " CODE BOOK";
+            header.innerText = name + " BOOK";
             header.style.backgroundColor = color;
 
-            // 清空並產生表格內容
-            container.innerHTML = '';
-            if (bookData.length === 0) {
-                container.innerHTML = '<p style="color:#666; grid-column: 1/-1; text-align:center;">NO DATA</p>';
-            } else {
-                bookData.forEach(item => {
-                    // 左側：圖示 + 名稱
-                    const itemCol = document.createElement('div');
-                    itemCol.className = 'book-item-col';
-                    itemCol.innerHTML = `<span class="book-icon">${item.icon}</span><span>${item.name}</span>`;
-                    
-                    // 右側：密碼
-                    const codeCol = document.createElement('div');
-                    codeCol.className = 'book-code-col';
-                    codeCol.innerText = item.code;
-                    // 讓密碼框的顏色跟隨小隊顏色
-                    codeCol.style.borderColor = color;
-                    codeCol.style.color = color;
-
-                    container.appendChild(itemCol);
-                    container.appendChild(codeCol);
-                });
-            }
+            contentArea.innerHTML = '';
+            
+            // 依序產生三大分類的表格：水果 -> 動物 -> 植物
+            createCategoryGrid(contentArea, 'FRUITS / 水果', MASTER_ASSETS.fruits, seeds, color, 0);
+            createCategoryGrid(contentArea, 'ANIMALS / 動物', MASTER_ASSETS.animals, seeds, color, 12); // 動物從第12個開始
+            createCategoryGrid(contentArea, 'PLANTS / 植物', MASTER_ASSETS.plants, seeds, color, 18); // 植物從第18個開始
 
             showScreen('codebook-view');
         }
 
+        function createCategoryGrid(container, title, assets, allSeeds, color, offsetIndex) {
+            // 標題
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'book-category-title';
+            titleDiv.innerText = title;
+            container.appendChild(titleDiv);
 
-        // --- 6. EXISTING MISSION LOGIC (舊有功能保持不變) ---
+            // Grid 容器
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'book-grid';
+
+            assets.forEach((item, localIndex) => {
+                // 找出這個物品對應的全域 index，以便從 SEEDS 拿密碼
+                const globalIndex = offsetIndex + localIndex;
+                const code = allSeeds[globalIndex] || '????';
+
+                // 左側：圖示 + 名稱
+                const itemCol = document.createElement('div');
+                itemCol.className = 'book-item-col';
+                itemCol.innerHTML = `<span class="book-icon">${item.i}</span><span>${item.n}</span>`;
+                
+                // 右側：密碼
+                const codeCol = document.createElement('div');
+                codeCol.className = 'book-code-col';
+                codeCol.innerText = code;
+                codeCol.style.borderColor = color;
+                codeCol.style.color = color;
+
+                gridDiv.appendChild(itemCol);
+                gridDiv.appendChild(codeCol);
+            });
+
+            container.appendChild(gridDiv);
+        }
+
+        // --- 6. MISSION LOGIC (維持不變) ---
 
         function checkPin() {
             const pin = document.getElementById('pin-input').value;
