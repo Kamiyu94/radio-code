@@ -35,7 +35,19 @@
     </style>
 </head>
 <body>
+    <div id="team-selector" style="display:none; height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:20px;">
+        <h1 style="color:var(--highlight); margin-bottom:30px;">SELECT YOUR SQUAD</h1>
+    
+        <button class="btn" onclick="selectTeam('loc_1')" style="margin-bottom:15px; border-color:#ff3333; color:#ff3333;">🔴 ALPHA TEAM (A小隊)</button>
+        <button class="btn" onclick="selectTeam('loc_2')" style="margin-bottom:15px; border-color:#33ff33; color:#33ff33;">🟢 BRAVO TEAM (B小隊)</button>
+        <button class="btn" onclick="selectTeam('loc_3')" style="margin-bottom:15px; border-color:#3388ff; color:#3388ff;">🔵 CHARLIE TEAM (C小隊)</button>
+        <button class="btn" onclick="selectTeam('loc_4')" style="margin-bottom:15px; border-color:#ffff33; color:#ffff33;">🟡 DELTA TEAM (D小隊)</button>
+    
+        <div style="margin-top:20px; color:#666; font-size:0.8rem;">或是請掃描任務地點 QR Code</div>
+    </div>
 
+<div id="app" style="display:none; width:100%; max-width:600px; margin:0 auto;">
+    </div>
     <div id="screen-loading" class="screen" style="justify-content:center; z-index:100;">
         <div class="spinner"></div>
         <div style="color:#666;">ESTABLISHING UPLINK...</div>
@@ -93,6 +105,10 @@
     </div>
 
     <script>
+        function selectTeam(startLocId) {
+            // 重新載入頁面，並帶上 ID 參數
+            window.location.href = `mission_v2.html?id=${startLocId}`;
+        }
         const SUPABASE_URL = 'https://lqhgpeuoejdyodanvauv.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxaGdwZXVvZWpkeW9kYW52YXV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDUyMzAsImV4cCI6MjA3OTA4MTIzMH0.my3U8mN06xm79ArFamTpWydf7rYFXOKT5-ooKmqb_O4';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -115,8 +131,29 @@
         const rescueCodes = { 'fruits': ['7001'], 'animals': ['8001'], 'plants': ['9001'] }; // Simplified for demo
 
         window.onload = async () => {
-            if (!missionId) { showError("INVALID TERMINAL ID"); return; }
-            if (isLocked) { showScreen('screen-locked'); return; }
+            // 1. 抓取網址參數
+            const urlParams = new URLSearchParams(window.location.search);
+            // 注意：請確認您原本變數是叫 missionId 還是 locationId，這裡統一用 missionId
+            const missionId = urlParams.get('id'); 
+
+            // 如果網址沒有 ID，就顯示選單
+            if (!missionId) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('team-selector').style.display = 'flex';
+                document.getElementById('app').style.display = 'none'; // 隱藏主介面
+                return; // 程式停在這裡，等待玩家點擊按鈕
+            }
+
+            // --- 有 ID 了，準備進入主程式 ---
+            document.getElementById('team-selector').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+
+    
+            if (isLocked) { 
+                document.getElementById('loading').style.display = 'none'; // 確保 loading 消失
+                showScreen('screen-locked'); 
+                return; 
+            }
 
             // Fetch Mission Data
             try {
