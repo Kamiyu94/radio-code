@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TOP SECRET // MISSION BRIEFING</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-main: #00ff41; /* 駭客綠 */
+            --alert: #ff3333;      /* 警告紅 */
+            --dim: #444;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 掃描線特效 */
+        body::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .header {
+            border-bottom: 2px solid var(--text-main);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            z-index: 3;
+        }
+
+        .logo-text { font-weight: 900; font-size: 1.2rem; letter-spacing: 2px; }
+        .date-text { font-size: 0.8rem; color: var(--text-main); }
+
+        .content-box {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid var(--dim);
+            padding: 20px;
+            background: rgba(20, 20, 20, 0.8);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+            position: relative;
+            z-index: 3;
+        }
+
+        /* 打字機文字樣式 */
+        .line {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            font-size: 1rem;
+            opacity: 0; /* 預設隱藏，靠 JS 顯示 */
+            transform: translateY(10px);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+        .line.visible { opacity: 1; transform: translateY(0); }
+        
+        .highlight { color: #fff; font-weight: bold; background: #004d00; padding: 2px 5px; }
+        .alert-text { color: var(--alert); font-weight: bold; text-shadow: 0 0 5px var(--alert); }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            z-index: 3;
+        }
+
+        .btn {
+            background: transparent;
+            color: var(--text-main);
+            border: 2px solid var(--text-main);
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+            opacity: 0; /* 初始隱藏 */
+        }
+
+        .btn:hover { background: var(--text-main); color: #000; box-shadow: 0 0 20px var(--text-main); }
+        
+        /* 閃爍游標 */
+        .cursor { display: inline-block; width: 10px; height: 1.2em; background: var(--text-main); animation: blink 1s infinite; vertical-align: text-bottom; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* 機密印章 */
+        .stamp {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg) scale(2);
+            border: 5px solid var(--alert);
+            color: var(--alert);
+            font-size: 3rem;
+            font-weight: 900;
+            padding: 10px 20px;
+            text-transform: uppercase;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1;
+            mix-blend-mode: screen;
+            transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .stamp.stamped { opacity: 0.3; transform: translate(-50%, -50%) rotate(-15deg) scale(1); }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo-text">URBAN WATCHERS</div>
+        <div class="date-text" id="current-date"></div>
+    </div>
+
+    <div class="content-box" id="terminal-content">
+        </div>
+
+    <div class="footer">
+        <button class="btn" id="start-btn" onclick="startMission()">接受任務 / ACCEPT</button>
+    </div>
+
+    <div class="stamp" id="secret-stamp">TOP SECRET</div>
+
+    <script>
+        // 設定今天的日期
+        const now = new Date();
+        document.getElementById('current-date').innerText = now.getFullYear() + '.' + (now.getMonth()+1).toString().padStart(2,'0') + '.' + now.getDate().toString().padStart(2,'0');
+
+        // 劇本內容 (可在此修改文案)
+        const storyLines = [
+            "正在建立安全連線... [SECURE CONNECTION ESTABLISHED]",
+            "身份驗證通過。通訊官，歡迎歸隊。",
+            "------------------------------------------------",
+            "【 任務代號：<span class='highlight'>拓樸行動 (Topological Action)</span> 】",
+            "狀態：<span class='alert-text'>紅色危急 (CRITICAL)</span>",
+            "------------------------------------------------",
+            "報告：",
+            "城市防衛系統遭遇大規模干擾，12 個核心節點與 HQ 失去聯繫。",
+            "敵方勢力正在嘗試重寫通訊協議，企圖瓦解我方防禦網。",
+            "我們需要你帶領小隊，攜帶 <span class='highlight'>紙本密碼本</span> 前往各個節點。",
+            "目標：",
+            "1. 抵達指定座標 (LOC 1-12)。",
+            "2. 透過無線電與友軍確認身份代碼。",
+            "3. 手動輸入解鎖密鑰，重啟防禦節點。",
+            "注意：",
+            "通訊已被監聽，<span class='alert-text'>嚴禁使用明語</span>傳遞密碼。",
+            "這是我們最後的機會。祝好運。",
+            "------------------------------------------------",
+            "傳輸結束。等待操作者回應..."
+        ];
+
+        const contentBox = document.getElementById('terminal-content');
+        const startBtn = document.getElementById('start-btn');
+        const stamp = document.getElementById('secret-stamp');
+        let lineIndex = 0;
+
+        // 打字機效果函式
+        function typeWriter() {
+            if (lineIndex < storyLines.length) {
+                const p = document.createElement('div');
+                p.className = 'line';
+                p.innerHTML = storyLines[lineIndex]; // 使用 innerHTML 讓 span 標籤生效
+                contentBox.appendChild(p);
+                
+                // 觸發淡入動畫
+                setTimeout(() => { p.classList.add('visible'); }, 50);
+                
+                // 自動捲動到底部
+                contentBox.scrollTop = contentBox.scrollHeight;
+
+                lineIndex++;
+                // 控制打字速度 (隨機一點比較像傳輸)
+                const delay = Math.random() * 500 + 300; 
+                setTimeout(typeWriter, delay);
+            } else {
+                // 文字跑完後
+                finishAnimation();
+            }
+        }
+
+        function finishAnimation() {
+            // 加上游標
+            const cursor = document.createElement('span');
+            cursor.className = 'cursor';
+            contentBox.lastChild.appendChild(cursor);
+
+            // 蓋章特效
+            setTimeout(() => {
+                stamp.classList.add('stamped');
+                // 顯示按鈕
+                setTimeout(() => {
+                    startBtn.style.opacity = '1';
+                }, 800);
+            }, 500);
+        }
+
+        function startMission() {
+            // 點擊後跳轉到 mission.html (不帶 ID，進入選單模式)
+            // 或是帶入預設 ID，看您的需求
+            
+            // 這裡做一個簡單的過場音效感
+            startBtn.innerText = "ACCESSING...";
+            startBtn.style.background = "#00ff41";
+            startBtn.style.color = "#000";
+            
+            setTimeout(() => {
+                // 跳轉到 mission.html (因為我們修好了選單功能，這裡不需要 ?id=...)
+                window.location.href = 'mission.html'; 
+            }, 1000);
+        }
+
+        // 啟動
+        setTimeout(typeWriter, 1000);
+
+    </script>
+</body>
+</html>
