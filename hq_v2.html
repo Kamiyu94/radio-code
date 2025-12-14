@@ -377,7 +377,7 @@
             document.getElementById('qrModal').style.display = 'none';
         }
 
-        // --- 5. PRINT FUNCTION (A4 四合一：七列四欄精準版) ---
+        // --- 5. PRINT FUNCTION (修正版：統一裁切線顏色) ---
         function generateCodeBook() {
             // 1. 準備圖示對照表
             const iconMap = {};
@@ -389,13 +389,12 @@
 
             // 2. 設定列印樣式
             let html = `<html><head><title>MISSION CODE BOOKS (GRID VIEW)</title><style>
-                /* 強制歸零頁面邊距，由 CSS 控制排版 */
                 @page { size: A4; margin: 0; }
                 
                 body { 
                     font-family: "Microsoft JhengHei", "Heiti TC", sans-serif; 
                     -webkit-print-color-adjust: exact; 
-                    margin: 0; padding: 10mm; /* 四周留白 1cm 方便印表機夾紙 */
+                    margin: 0; padding: 10mm; 
                     height: 100vh; 
                     box-sizing: border-box;
                     display: flex; 
@@ -404,18 +403,17 @@
                     align-content: space-between;
                 }
                 
-                /* 每一格精準佔據一半扣除間隙 */
                 .quarter-page { 
                     width: calc(50% - 2mm); 
                     height: calc(50% - 2mm); 
-                    border: 1px dashed #999; /* 裁切線改細一點比較準 */
+                    border: 1px dashed #666; /* ★ 修改這裡：統一用深灰色，確保看得清楚 */
                     box-sizing: border-box; 
                     padding: 8px;
                     position: relative;
                     display: flex;
                     flex-direction: column;
                     border-radius: 8px;
-                    overflow: hidden; /* 防止內容溢出 */
+                    overflow: hidden; 
                 }
 
                 .header-section {
@@ -425,7 +423,7 @@
                     border-bottom: 2px solid #000;
                     padding-bottom: 4px;
                     margin-bottom: 4px;
-                    height: 35px; /* 固定標頭高度 */
+                    height: 35px;
                 }
 
                 .team-name { 
@@ -439,16 +437,14 @@
                     text-align: right; line-height: 1.1;
                 }
 
-                /* 網格容器：4欄 x 7列 */
                 .grid-container { 
                     display: grid; 
-                    grid-template-columns: repeat(4, 1fr); /* 4 欄 */
-                    grid-template-rows: repeat(7, 1fr);    /* 7 列 */
+                    grid-template-columns: repeat(4, 1fr); 
+                    grid-template-rows: repeat(7, 1fr);    
                     gap: 2px;
-                    flex: 1; /* 填滿剩餘高度 */
+                    flex: 1; 
                 }
 
-                /* 單個物品卡片 */
                 .item { 
                     border: 1px solid #ddd; 
                     border-radius: 4px;
@@ -470,10 +466,9 @@
                     font-size: 1rem; 
                     color: #000;
                     line-height: 1;
-                    letter-spacing: -0.5px; /* 稍微擠一點讓4碼更好看 */
+                    letter-spacing: -0.5px;
                 }
                 
-                /* 讓 A/B/C/D 的浮水印顏色淡一點 */
                 .watermark {
                     position: absolute; top: 55%; left: 50%; 
                     transform: translate(-50%, -50%) rotate(0deg);
@@ -486,14 +481,10 @@
                     font-size: 0.5rem; text-align: center; margin-top: 4px; color: #aaa; height: 10px;
                 }
 
-                /* 針對不同小隊的邊框微調 (可選) */
-                .quarter-page[data-team="A"] { border-color: #ffcccc; }
-                .quarter-page[data-team="B"] { border-color: #ccffcc; }
-                .quarter-page[data-team="C"] { border-color: #ccccff; }
-                .quarter-page[data-team="D"] { border-color: #ffffcc; }
+                /* ★ 我把原本這邊「改變邊框顏色」的程式碼刪掉了，這樣 D 小隊就不會變成看不見的黃色邊框了 */
+                
             </style></head><body>`;
 
-            // 3. 定義四個小隊
             const teams = ['A', 'B', 'C', 'D'];
             const teamInfo = {
                 'A': { name: 'ALPHA', color: '#CC0000' },
@@ -502,7 +493,6 @@
                 'D': { name: 'DELTA', color: '#CCAA00' }
             };
 
-            // 4. 生成四個區塊
             teams.forEach(team => {
                 const bookData = CODE_BOOKS[team];
                 if (!bookData) return;
@@ -519,7 +509,6 @@
                     
                     <div class="grid-container">`;
                 
-                // 列印物品 (Grid View)
                 Object.keys(bookData).sort().forEach(itemName => {
                     const icon = iconMap[itemName] || ''; 
                     html += `
