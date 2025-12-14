@@ -227,17 +227,52 @@
             });
         }
 
+let currentChannel = null;
+
         function startListening() {
-            supabase
-            .channel('game-monitor')
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'mission_states', filter: `session_id=eq.${activeSessionId}` }, (payload) => {
-                const updated = payload.new;
-                const card = document.getElementById(`card-${updated.location_id}`);
-                if(card && updated.is_solved) {
-                    card.classList.add('solved');
+            // 1. 如果有舊頻道，先移除，確保乾淨
+            if (currentChannel) {
+                supabase.removeChannel(currentChannel);
+            }
+
+            console.log(`📡 啟動監聽... 目標 Session ID: ${activeSessionId}`);
+
+            // 2. 訂閱整個 mission_states 表格 (不設 filter)
+            currentChannel = supabase.channel('room-global')
+            .on(
+                'postgres_changes', 
+                { 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: 'mission_states' 
+                }, 
+                (payload) => {
+                    console.log("📨 收到變更訊號！", payload);
+
+                    // 3. 【關鍵】在這邊自己檢查 ID (前端過濾)
+                    // 如果收到的資料 session_id 不等於當前戰局 ID，就忽略
+                    if (payload.new.session_id !== activeSessionId) {
+                        console.log("Ignoring update from other session.");
+                        return;
+                    }
+
+                    // 4. 更新畫面
+                    const updated = payload.new;
+                    if (updated.is_solved) {
+                        const card = document.getElementById(`card-${updated.location_id}`);
+                        if (card) {
+                            console.log(`✅ 命中！更新卡片: ${updated.location_id}`);
+                            card.classList.add('solved');
+                        }
+                    }
                 }
-            })
-            .subscribe();
+            )
+            .subscribe((status) => {
+                console.log(`📶 連線狀態: ${status}`);
+                if (status === 'SUBSCRIBED') {
+                    console.log("🚀 即時監控已連線！現在不需要 F5 了！");
+                }
+            });
         }
 
         // On Load: Try to fetch latest active session
