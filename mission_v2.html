@@ -103,7 +103,7 @@
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
             padding: 20px; padding-top: 5vh;
             background: #000; z-index: 10;
-            overflow-y: auto; /* 允許捲動以看到底部的重置按鈕 */
+            overflow-y: auto; 
         }
 
         .input-box {
@@ -333,7 +333,24 @@
                 return;
             }
 
-            activeSessionId = sessions[0].id;
+            const newSessionId = sessions[0].id;
+
+            // ★ 新增：自動重置邏輯 (AUTO-RESET LOGIC)
+            // 如果從資料庫抓到的 Session ID 跟本地存的不一樣，代表 HQ 已經開啟新局
+            const lastSessionId = localStorage.getItem('last_active_session_id');
+            if (lastSessionId && lastSessionId !== newSessionId) {
+                console.log("New session detected. Resetting identity.");
+                localStorage.removeItem('my_squad_identity'); // 清除身分
+                localStorage.setItem('last_active_session_id', newSessionId); // 更新 ID
+                alert("HQ 已重置戰局，請重新選擇身分！");
+                location.reload();
+                return;
+            }
+            
+            // 如果是第一次連線，也要存下這個 Session ID
+            localStorage.setItem('last_active_session_id', newSessionId);
+            activeSessionId = newSessionId;
+            
             const disp = document.getElementById('session-id-disp');
             if(disp) disp.innerText = activeSessionId.split('-')[0];
 
@@ -382,7 +399,6 @@
             document.getElementById('code-input').value = '';
             document.getElementById('error-msg').style.display = 'none';
 
-            // ★ 核心邏輯：顯示要呼叫誰
             const targetTeamCode = TARGET_MAPPING[currentLocationId];
             if (targetTeamCode) {
                 const targetInfo = TEAM_INFO[targetTeamCode];
