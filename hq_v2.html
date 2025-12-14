@@ -56,6 +56,7 @@
         <div style="font-size:0.8rem; color:#666;">ONLINE VER.</div>
     </div>
 
+    <div class="control-panel">
         <button class="btn" onclick="startNewGame()">⚠ 初始化並啟動新戰局 ⚠</button>
         <button class="btn" style="margin-top:10px; border-color:#fff; color:#fff;" onclick="generateCodeBook()">🖨️ 產生/列印 密碼對照表 (Code Book)</button>
     </div>
@@ -68,14 +69,16 @@
 
     <div class="status-bar" id="status-text">SYSTEM STANDBY</div>
     <div id="loading"><div style="color:#fff; font-size:2rem;">PROCESSING...</div></div>
+    
     <div id="qrModal" class="qr-modal">
-    <div class="qr-box">
-        <h2 id="qrTitle" style="color:var(--highlight); margin-top:0;">LOC X</h2>
-        <div id="qrCanvas"></div>
-        <a id="qrLink" href="#" target="_blank" class="qr-link">LINK</a>
-        <button class="close-btn" onclick="closeQR()">CLOSE WINDOW</button>
+        <div class="qr-box">
+            <h2 id="qrTitle" style="color:var(--highlight); margin-top:0;">LOC X</h2>
+            <div id="qrCanvas"></div>
+            <a id="qrLink" href="#" target="_blank" class="qr-link">LINK</a>
+            <button class="close-btn" onclick="closeQR()">CLOSE WINDOW</button>
         </div>
     </div>
+
     <script>
         // --- 1. CONFIGURATION (請填入你的 Supabase 資料) ---
         const SUPABASE_URL = 'https://lqhgpeuoejdyodanvauv.supabase.co';
@@ -160,109 +163,8 @@
             ]
         };
 
-        // 為了相容性，保留這個變數
-        const FIXED_CODE_MAP = CODE_BOOKS.A;
+        // --- 3. LOGIC HELPERS ---
 
-        // --- 3. LOGIC ---
-        // (這裡不需要動，請保留原本的 shuffle, generateRandomCode 等 helper functions...)
-
-
-        // --- 4. PRINT FUNCTION (已更新為 CITY GUARDIAN) ---
-        function generateCodeBook() {
-            // 1. 設定列印樣式
-            let html = `<html><head><title>MISSION CODE BOOKS (ALL TEAMS)</title><style>
-                body { font-family: "Microsoft JhengHei", sans-serif; -webkit-print-color-adjust: exact; }
-                .page { 
-                    page-break-after: always; 
-                    padding: 40px; 
-                    border: 5px solid #000; 
-                    height: 95vh; 
-                    box-sizing: border-box; 
-                    position: relative;
-                }
-                h1 { text-align: center; border-bottom: 3px solid #000; margin-bottom: 10px; text-transform: uppercase; }
-                .team-badge { 
-                    text-align: center; font-size: 2.5rem; font-weight: 900; 
-                    color: #fff; padding: 10px; margin-bottom: 20px; 
-                    border-radius: 8px; text-shadow: 1px 1px 2px #000;
-                }
-                .warning { color: red; text-align: center; font-weight: bold; margin-bottom: 20px; border: 2px solid red; padding: 5px; }
-                .grid { 
-                    display: grid; grid-template-columns: repeat(3, 1fr); 
-                    gap: 15px; font-size: 1rem; 
-                }
-                .item { 
-                    border-bottom: 1px dashed #ccc; padding: 5px; 
-                    display: flex; justify-content: space-between; align-items: center; 
-                }
-                .name { font-weight: bold; }
-                .code { font-family: 'Courier New', monospace; font-weight: 900; font-size: 1.2rem; letter-spacing: 1px;}
-                
-                /* 浮水印效果 */
-                .watermark {
-                    position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
-                    font-size: 6rem; opacity: 0.05; font-weight: bold; pointer-events: none; white-space: nowrap; z-index:0;
-                }
-                .footer {
-                    position: absolute; bottom: 20px; width: 100%; text-align: center; font-size: 0.8rem; color: #666;
-                    font-weight: bold; letter-spacing: 1px;
-                }
-            </style></head><body>`;
-
-            // 2. 定義四個小隊的資訊
-            const teams = ['A', 'B', 'C', 'D'];
-            const teamInfo = {
-                'A': { name: 'ALPHA TEAM', color: '#CC0000' }, // 深紅
-                'B': { name: 'BRAVO TEAM', color: '#009900' }, // 深綠
-                'C': { name: 'CHARLIE TEAM', color: '#0033CC' }, // 深藍
-                'D': { name: 'DELTA TEAM', color: '#CCAA00' }  // 深黃
-            };
-
-            // 3. 迴圈生成 4 個頁面
-            teams.forEach(team => {
-                const bookData = CODE_BOOKS[team]; 
-                
-                if (!bookData || Object.keys(bookData).length === 0) {
-                    console.error(`Code book data missing for team ${team}`);
-                    return;
-                }
-
-                const info = teamInfo[team];
-
-                html += `
-                <div class="page">
-                    <div class="watermark">${info.name}</div>
-                    <div class="team-badge" style="background:${info.color}">${info.name}</div>
-                    <h1>專用通訊代碼本</h1>
-                    <div class="warning">⚠️ 機密文件：僅限該小隊使用，禁止出示給他隊觀看 ⚠️</div>
-                    
-                    <div class="grid">`;
-                
-                Object.keys(bookData).sort().forEach(itemName => {
-                    html += `
-                    <div class="item">
-                        <span class="name">${itemName}</span>
-                        <span class="code">${bookData[itemName]}</span>
-                    </div>`;
-                });
-
-                // 更新頁尾為 CITY GUARDIAN
-                html += `
-                    </div>
-                    <div class="footer">
-                        CITY GUARDIAN TACTICAL SYSTEM - DO NOT DISTRIBUTE
-                    </div>
-                </div>`;
-            });
-
-            html += `<script>window.print();<\/script></body></html>`;
-            
-            // 4. 開啟新視窗列印
-            const printWin = window.open('', '_blank');
-            printWin.document.write(html);
-            printWin.document.close();
-        }
-        
         // 1. 洗牌演算法 (Fisher-Yates Shuffle)
         function shuffle(array) {
             let currentIndex = array.length, randomIndex;
@@ -284,7 +186,9 @@
             }
             return result;
         }
-        
+
+        // --- 4. CORE FUNCTIONS ---
+
         async function startNewGame() {
             if(!confirm("⚠️ 確定要啟動新戰局？\n這將會重置目前所有的連線進度！")) return;
             
@@ -303,7 +207,6 @@
             activeSessionId = session.id;
 
             // --- 2. Prepare Data (Shuffle Items) ---
-            // 這裡的隨機洗牌，就已經提供了足夠的遊戲變化性
             const shuffledFruits = shuffle([...MASTER_ASSETS.fruits]);
             const shuffledAnimals = shuffle([...MASTER_ASSETS.animals]);
             const shuffledPlants = shuffle([...MASTER_ASSETS.plants]);
@@ -332,11 +235,9 @@
                 else if(m.cat === 'animals') asset = shuffledAnimals.pop();
                 else asset = shuffledPlants.pop();
 
-                // ★ 強制使用密碼本 (因為我們已經有紙本了)
-                // 根據 target_book 查表 (例如 LOC 1 查 Book B 的密碼)
+                // ★ 強制使用密碼本
                 let code = CODE_BOOKS[m.target_book][asset.n];
                 
-                // 防呆：萬一真的有漏網之魚查不到，才給亂數 (理論上不該發生)
                 if(!code) {
                     console.error(`Missing code for ${asset.n} in Book ${m.target_book}`);
                     code = generateRandomCode(); 
@@ -366,7 +267,6 @@
             
             // --- 4. Finish ---
             document.getElementById('loading').style.display = 'none';
-            // 狀態列簡化顯示
             document.getElementById('status-text').innerText = `SESSION ACTIVE: ${activeSessionId.split('-')[0]}...`;
             
             renderDashboard(payload);
@@ -377,8 +277,6 @@
             const container = document.getElementById('dashboard');
             container.innerHTML = '';
             
-            // Sort by ID order: loc_1... loc_8, hq_a...
-            // (Simple mapping for display order)
             const order = ['loc_1','loc_2','loc_3','loc_4','loc_5','loc_6','loc_7','loc_8','loc_9','loc_10','loc_11','loc_12'];
             
             data.sort((a,b) => order.indexOf(a.location_id) - order.indexOf(b.location_id));
@@ -397,17 +295,15 @@
             });
         }
 
-let currentChannel = null;
+        let currentChannel = null;
 
         function startListening() {
-            // 1. 如果有舊頻道，先移除，確保乾淨
             if (currentChannel) {
                 supabase.removeChannel(currentChannel);
             }
 
             console.log(`📡 啟動監聽... 目標 Session ID: ${activeSessionId}`);
 
-            // 2. 訂閱整個 mission_states 表格 (不設 filter)
             currentChannel = supabase.channel('room-global')
             .on(
                 'postgres_changes', 
@@ -419,14 +315,11 @@ let currentChannel = null;
                 (payload) => {
                     console.log("📨 收到變更訊號！", payload);
 
-                    // 3. 【關鍵】在這邊自己檢查 ID (前端過濾)
-                    // 如果收到的資料 session_id 不等於當前戰局 ID，就忽略
                     if (payload.new.session_id !== activeSessionId) {
                         console.log("Ignoring update from other session.");
                         return;
                     }
 
-                    // 4. 更新畫面
                     const updated = payload.new;
                     if (updated.is_solved) {
                         const card = document.getElementById(`card-${updated.location_id}`);
@@ -445,7 +338,7 @@ let currentChannel = null;
             });
         }
 
-        // On Load: Try to fetch latest active session
+        // On Load
         window.onload = async () => {
              const { data: sessions } = await supabase.from('game_sessions').select('id').eq('is_active', true).order('created_at', { ascending: false }).limit(1);
              if(sessions && sessions.length > 0) {
@@ -458,89 +351,121 @@ let currentChannel = null;
                  }
              }
         }
+
         function generateQR(locId) {
-        // 1. 計算 mission_v2.html 的完整網址
-        // 自動抓取當前網址路徑，把 hq_v2.html 換成 mission_v2.html
-        const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
-        const fullUrl = `${baseUrl}/mission_v2.html?id=${locId}`;
+            const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+            const fullUrl = `${baseUrl}/mission_v2.html?id=${locId}`;
 
-        // 2. 設定 UI
-        document.getElementById('qrTitle').innerText = `SCAN TO ACCESS: ${locId.toUpperCase()}`;
-        document.getElementById('qrLink').innerText = fullUrl;
-        document.getElementById('qrLink').href = fullUrl;
-        document.getElementById('qrCanvas').innerHTML = ""; // 清空舊圖
+            document.getElementById('qrTitle').innerText = `SCAN TO ACCESS: ${locId.toUpperCase()}`;
+            document.getElementById('qrLink').innerText = fullUrl;
+            document.getElementById('qrLink').href = fullUrl;
+            document.getElementById('qrCanvas').innerHTML = "";
 
-        // 3. 產生 QR Code
-        new QRCode(document.getElementById("qrCanvas"), {
-            text: fullUrl,
-            width: 250,
-            height: 250,
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
-        });
+            new QRCode(document.getElementById("qrCanvas"), {
+                text: fullUrl,
+                width: 250,
+                height: 250,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
 
-        // 4. 顯示視窗
-        document.getElementById('qrModal').style.display = 'flex';
-    }
+            document.getElementById('qrModal').style.display = 'flex';
+        }
 
-    function closeQR() {
-        document.getElementById('qrModal').style.display = 'none';
-    }
-    function generateCodeBook() {
-    // 1. 準備 HTML 標頭
-    let html = `
-        <html>
-        <head>
-            <title>通訊代碼對照表 (Code Book)</title>
-            <style>
-                body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; }
-                h1 { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; }
-                .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
-                .item { border: 1px solid #ccc; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; }
-                .name { font-weight: bold; font-size: 1.1rem; }
-                .code { font-family: "Courier New", monospace; font-weight: bold; font-size: 1.2rem; background: #eee; padding: 2px 6px; border-radius: 4px; }
-                @media print { .btn-print { display: none; } }
-            </style>
-        </head>
-        <body>
-            <h1>📁 機密任務：通訊代碼對照表</h1>
-            <div style="text-align:center; margin-bottom:20px; color:#666;">
-                ⚠️ 僅供通訊官使用，請妥善保管。
-            </div>
-            <div class="grid">
-    `;
+        function closeQR() {
+            document.getElementById('qrModal').style.display = 'none';
+        }
 
-    // 2. 讀取 FIXED_CODE_MAP 並生成表格
-    // 為了美觀，我們依據注音或筆畫稍微排序一下 (這裡簡單用 key 排序)
-    const sortedKeys = Object.keys(FIXED_CODE_MAP).sort();
-    
-    sortedKeys.forEach(key => {
-        html += `
-            <div class="item">
-                <span class="name">${key}</span>
-                <span class="code">${FIXED_CODE_MAP[key]}</span>
-            </div>
-        `;
-    });
+        // --- 5. PRINT FUNCTION (多隊版本) ---
+        function generateCodeBook() {
+            let html = `<html><head><title>MISSION CODE BOOKS (ALL TEAMS)</title><style>
+                body { font-family: "Microsoft JhengHei", sans-serif; -webkit-print-color-adjust: exact; }
+                .page { 
+                    page-break-after: always; 
+                    padding: 40px; 
+                    border: 5px solid #000; 
+                    height: 95vh; 
+                    box-sizing: border-box; 
+                    position: relative;
+                }
+                h1 { text-align: center; border-bottom: 3px solid #000; margin-bottom: 10px; text-transform: uppercase; }
+                .team-badge { 
+                    text-align: center; font-size: 2.5rem; font-weight: 900; 
+                    color: #fff; padding: 10px; margin-bottom: 20px; 
+                    border-radius: 8px; text-shadow: 1px 1px 2px #000;
+                }
+                .warning { color: red; text-align: center; font-weight: bold; margin-bottom: 20px; border: 2px solid red; padding: 5px; }
+                .grid { 
+                    display: grid; grid-template-columns: repeat(3, 1fr); 
+                    gap: 15px; font-size: 1rem; 
+                }
+                .item { 
+                    border-bottom: 1px dashed #ccc; padding: 5px; 
+                    display: flex; justify-content: space-between; align-items: center; 
+                }
+                .name { font-weight: bold; }
+                .code { font-family: 'Courier New', monospace; font-weight: 900; font-size: 1.2rem; letter-spacing: 1px;}
+                
+                .watermark {
+                    position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
+                    font-size: 6rem; opacity: 0.05; font-weight: bold; pointer-events: none; white-space: nowrap; z-index:0;
+                }
+                .footer {
+                    position: absolute; bottom: 20px; width: 100%; text-align: center; font-size: 0.8rem; color: #666;
+                    font-weight: bold; letter-spacing: 1px;
+                }
+            </style></head><body>`;
 
-    // 3. 結尾
-    html += `
-            </div>
-            <div style="margin-top:30px; text-align:center; font-size:0.8rem; color:#999;">
-                GENERATED BY URBAN WATCHERS HQ SYSTEM
-            </div>
-            <script>window.print();<\/script>
-        </body>
-        </html>
-    `;
+            const teams = ['A', 'B', 'C', 'D'];
+            const teamInfo = {
+                'A': { name: 'ALPHA TEAM', color: '#CC0000' },
+                'B': { name: 'BRAVO TEAM', color: '#009900' },
+                'C': { name: 'CHARLIE TEAM', color: '#0033CC' },
+                'D': { name: 'DELTA TEAM', color: '#CCAA00' }
+            };
 
-    // 4. 開啟新視窗列印
-    const printWin = window.open('', '_blank');
-    printWin.document.write(html);
-    printWin.document.close();
-}    
+            teams.forEach(team => {
+                const bookData = CODE_BOOKS[team];
+                
+                if (!bookData || Object.keys(bookData).length === 0) {
+                    return;
+                }
 
+                const info = teamInfo[team];
+
+                html += `
+                <div class="page">
+                    <div class="watermark">${info.name}</div>
+                    <div class="team-badge" style="background:${info.color}">${info.name}</div>
+                    <h1>專用通訊代碼本</h1>
+                    <div class="warning">⚠️ 機密文件：僅限該小隊使用，禁止出示給他隊觀看 ⚠️</div>
+                    
+                    <div class="grid">`;
+                
+                Object.keys(bookData).sort().forEach(itemName => {
+                    html += `
+                    <div class="item">
+                        <span class="name">${itemName}</span>
+                        <span class="code">${bookData[itemName]}</span>
+                    </div>`;
+                });
+
+                // Updated Footer
+                html += `
+                    </div>
+                    <div class="footer">
+                        CITY GUARDIAN TACTICAL SYSTEM - DO NOT DISTRIBUTE
+                    </div>
+                </div>`;
+            });
+
+            html += `<script>window.print();<\/script></body></html>`;
+            
+            const printWin = window.open('', '_blank');
+            printWin.document.write(html);
+            printWin.document.close();
+        }    
     </script>
 </body>
 </html>
