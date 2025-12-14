@@ -101,7 +101,7 @@
         .screen { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-            padding: 20px; padding-top: 5vh; padding-bottom: 60px; /* 留給懸浮按鈕空間 */
+            padding: 20px; padding-top: 5vh; padding-bottom: 60px;
             background: #000; z-index: 10;
             overflow-y: auto; 
         }
@@ -152,7 +152,7 @@
         }
         .loading-retry { margin-top: 20px; color: #fff; border: 1px solid #666; padding: 5px 15px; font-size: 0.8rem; cursor: pointer; display: none;}
 
-        /* ★ 新增：全域懸浮重置按鈕 ★ */
+        /* ★ 全域懸浮重置按鈕 ★ */
         .floating-reset-btn {
             position: fixed; bottom: 15px; right: 15px;
             background: rgba(0,0,0,0.8); border: 1px solid #666; color: #666;
@@ -162,6 +162,12 @@
         }
         .floating-reset-btn:hover { border-color: var(--danger); color: var(--danger); }
 
+        /* ★ 管理員密碼 Modal ★ */
+        #admin-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 600;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -171,7 +177,15 @@
         <div class="loading-retry" onclick="location.reload()">RETRY CONNECTION</div>
     </div>
 
-    <div class="floating-reset-btn" onclick="clearIdentity()">⚠ 重置 / RESET</div>
+    <div class="floating-reset-btn" onclick="openAdminModal()">⚠ 重置 / RESET</div>
+
+    <div id="admin-modal" class="hidden">
+        <h2 style="color:var(--danger);">ADMIN OVERRIDE</h2>
+        <p style="color:#888; margin-bottom:20px;">請輸入 HQ 授權碼以重置身分</p>
+        <input type="number" id="admin-pin" class="input-box" placeholder="PIN" style="border-color:var(--danger); color:var(--danger);">
+        <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="confirmReset()">CONFIRM RESET</button>
+        <button class="btn" style="border-color:#666; color:#666;" onclick="closeAdminModal()">CANCEL</button>
+    </div>
 
     <div id="identity-screen" class="hidden">
         <div class="id-title">IDENTITY CHECK</div>
@@ -190,7 +204,6 @@
     </div>
 
     <div id="app" class="hidden">
-        
         <div id="screen-input" class="screen">
             <div class="identity-badge" id="identity-display">UNKOWN</div>
             <div style="font-size:0.8rem; color:#666; width:100%; text-align:right; margin-bottom:10px;">ONLINE: <span id="session-id-disp">...</span></div>
@@ -206,12 +219,9 @@
             
             <input type="text" id="code-input" class="input-box" placeholder="CODE" maxlength="4">
             <button class="btn" onclick="submitCode()">VERIFY</button>
-            
             <div id="error-msg" style="color:red; margin-top:10px; display:none;">ACCESS DENIED</div>
 
-            <button class="my-book-btn" onclick="openMyBook()">
-                <span>📖 開啟我的密碼本</span>
-            </button>
+            <button class="my-book-btn" onclick="openMyBook()"><span>📖 開啟我的密碼本</span></button>
         </div>
 
         <div id="screen-success" class="screen hidden" style="background:#001a00;">
@@ -228,10 +238,8 @@
             <div class="status-icon">⏳</div>
             <div class="info-text">SYSTEM STANDBY</div>
             <p style="color:#666; text-align:center;">WAITING FOR HQ SIGNAL</p>
-            <div style="color:#444; font-size:0.8rem; margin-top:10px;">請教官在 HQ 端啟動戰局</div>
             <button class="btn" style="margin-top:20px;" onclick="location.reload()">RECONNECT</button>
         </div>
-
     </div>
 
     <script>
@@ -239,6 +247,9 @@
         const SUPABASE_URL = 'https://lqhgpeuoejdyodanvauv.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxaGdwZXVvZWpkeW9kYW52YXV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDUyMzAsImV4cCI6MjA3OTA4MTIzMH0.my3U8mN06xm79ArFamTpWydf7rYFXOKT5-ooKmqb_O4';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // ★ HQ 授權碼設定 ★
+        const ADMIN_PIN = "8888"; 
 
         // --- 2. 靜態資料 ---
         const TEAM_INFO = {
@@ -289,30 +300,36 @@
             const urlParams = new URLSearchParams(window.location.search);
             currentLocationId = urlParams.get('id');
 
-            // 1. 檢查是否有身分
-            if (!myIdentity) {
+            // 1. 初始化檢查：強制同步新戰局
+            // 這一步非常重要，確保在載入任何東西之前，先確認戰局是否已過期
+            await checkHeartbeat(true);
+
+            // 2. 檢查身分
+            if (!localStorage.getItem('my_squad_identity')) {
                 hideLoading();
                 document.getElementById('identity-screen').classList.remove('hidden');
                 return; 
             }
+            // 重新讀取（以防被上面清除）
+            myIdentity = localStorage.getItem('my_squad_identity');
 
-            // 2. 如果沒 ID，顯示提示
+            // 3. 檢查 ID
             if (!currentLocationId) {
                 hideLoading();
                 alert("請掃描現場 QR Code 以進入任務");
                 return;
             }
 
-            // 3. 正常流程
+            // 4. 正常流程
             document.getElementById('app').classList.remove('hidden');
             document.getElementById('identity-display').innerText = myIdentity + " SQUAD";
-            await checkSessionAndLoadMission();
+            await loadMissionData();
 
-            // ★ 啟動心跳偵測 (每 5 秒檢查一次是否有新戰局)
-            setInterval(checkHeartbeat, 5000);
+            // ★ 啟動循環心跳偵測
+            setInterval(() => checkHeartbeat(false), 5000);
         };
 
-        // --- 5. IDENTITY LOGIC ---
+        // --- 5. IDENTITY & ADMIN LOGIC ---
         function setIdentity(team) {
             if(confirm(`確認您的身分為 ${team} 小隊？\n確認後將無法更改。`)) {
                 localStorage.setItem('my_squad_identity', team);
@@ -321,17 +338,32 @@
             }
         }
 
-        function clearIdentity() {
-            if(confirm("⚠ SYSTEM RESET ⚠\n確定要重置身分設定嗎？")) {
-                localStorage.removeItem('my_squad_identity');
-                location.reload();
+        function openAdminModal() {
+            document.getElementById('admin-modal').classList.remove('hidden');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('admin-modal').classList.add('hidden');
+            document.getElementById('admin-pin').value = '';
+        }
+
+        function confirmReset() {
+            const pin = document.getElementById('admin-pin').value;
+            if (pin === ADMIN_PIN) {
+                if(confirm("⚠ SYSTEM RESET ⚠\n確定要強制清除此裝置的身分嗎？")) {
+                    localStorage.removeItem('my_squad_identity');
+                    location.reload();
+                }
+            } else {
+                alert("授權碼錯誤 (ACCESS DENIED)");
+                document.getElementById('admin-pin').value = '';
             }
         }
 
-        // --- 6. MISSION LOGIC ---
+        // --- 6. HEARTBEAT & MISSION LOGIC ---
         
-        // ★ 自動檢查是否有新戰局 (防止卡死)
-        async function checkHeartbeat() {
+        // ★ 自動檢查新戰局 (最關鍵的修復)
+        async function checkHeartbeat(isInit = false) {
             const { data: sessions } = await supabase
                 .from('game_sessions')
                 .select('id')
@@ -341,41 +373,39 @@
 
             if (sessions && sessions.length > 0) {
                 const latestId = sessions[0].id;
-                // 如果資料庫的最新 ID 與我現在的不一樣，代表 HQ 重啟了
-                if (activeSessionId && latestId !== activeSessionId) {
-                    console.log("New session detected by heartbeat!");
-                    alert("HQ 已重置戰局，系統將自動刷新！");
+                const localSession = localStorage.getItem('last_active_session_id');
+
+                // 如果是第一次執行(isInit)，且本地沒有紀錄，就存下來
+                if (isInit && !localSession) {
+                    localStorage.setItem('last_active_session_id', latestId);
+                    activeSessionId = latestId;
+                    return;
+                }
+
+                // 如果資料庫的 ID 與 本地存的 ID 不同 -> 代表 HQ 重啟了
+                if (localSession && latestId !== localSession) {
+                    console.log("🔥 NEW SESSION DETECTED! FORCING RESET.");
+                    alert("⚠️ HQ 已重置戰局 ⚠️\n\n系統將自動刷新並清除身分設定。");
                     
-                    // 清除舊身分，強制重選
+                    // 強制清除所有狀態
                     localStorage.removeItem('my_squad_identity');
+                    localStorage.setItem('last_active_session_id', latestId);
+                    
                     location.reload();
+                    return;
+                }
+                
+                // 更新當前記憶體中的 ID
+                activeSessionId = latestId;
+                if(document.getElementById('session-id-disp')) {
+                    document.getElementById('session-id-disp').innerText = activeSessionId.split('-')[0];
                 }
             }
         }
 
-        async function checkSessionAndLoadMission() {
-            const { data: sessions, error } = await supabase
-                .from('game_sessions')
-                .select('id')
-                .eq('is_active', true)
-                .order('created_at', { ascending: false })
-                .limit(1);
-
-            if (error || !sessions || sessions.length === 0) {
-                console.log("No active session found.");
-                showScreen('screen-wait'); 
-                hideLoading();
-                return;
-            }
-
-            activeSessionId = sessions[0].id;
-            const disp = document.getElementById('session-id-disp');
-            if(disp) disp.innerText = activeSessionId.split('-')[0];
-            
-            await loadMissionData();
-        }
-
         async function loadMissionData() {
+            if(!activeSessionId) return;
+
             const { data, error } = await supabase
                 .from('mission_states')
                 .select('*')
@@ -386,7 +416,7 @@
             if (error || !data) {
                 console.error("Mission data not found", error);
                 hideLoading();
-                alert("⚠ 無法取得任務資料");
+                alert("⚠ 無法取得任務資料\n(請確認 HQ 已啟動戰局)");
                 showScreen('screen-wait');
                 return;
             }
@@ -399,6 +429,15 @@
             } else {
                 showInput(data);
             }
+            
+            // 訂閱監聽 (確保即時更新)
+            const channel = supabase.channel('room-global')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'mission_states', filter: `id=eq.${data.id}` }, (payload) => {
+                if (payload.new.is_solved) {
+                    currentMissionData.is_solved = true;
+                    showSuccess(payload.new);
+                }
+            }).subscribe();
         }
 
         function showInput(data) {
@@ -442,7 +481,7 @@
                     hideLoading();
                     return;
                 }
-
+                // 本地先更新，不等監聽
                 currentMissionData.is_solved = true; 
                 showSuccess(currentMissionData);
                 hideLoading();
@@ -463,10 +502,9 @@
             if(el) el.classList.remove('hidden');
         }
 
-        // --- 7. BOOK UI (只開啟自己的書) ---
+        // --- 7. BOOK UI ---
         function openMyBook() {
             if (!myIdentity) return;
-            
             const seeds = SEEDS[myIdentity];
             const info = TEAM_INFO[myIdentity];
             const contentArea = document.getElementById('book-content');
