@@ -64,7 +64,7 @@
         .line {
             margin-bottom: 15px;
             line-height: 1.6;
-            font-size: 1rem;
+            font-size: 1.1rem; /* 字體稍微調大一點，方便閱讀 */
             opacity: 0; /* 預設隱藏，靠 JS 顯示 */
             transform: translateY(10px);
             transition: opacity 0.5s, transform 0.5s;
@@ -78,7 +78,7 @@
             margin-top: 20px;
             text-align: center;
             z-index: 3;
-            min-height: 60px; /* 預留高度給按鈕 */
+            min-height: 60px;
         }
 
         .btn {
@@ -118,20 +118,26 @@
             padding: 10px 20px;
             text-transform: uppercase;
             opacity: 0;
-            pointer-events: none;
+            pointer-events: none; /* 關鍵：讓滑鼠事件穿透印章，方便滑動 */
             z-index: 100;
             mix-blend-mode: screen;
-            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            background: rgba(0,0,0,0.5); /* 增加一點底色讓字更清楚 */
+            /* 增加透明度變化的過渡效果，讓淡入淡出更滑順 */
+            transition: opacity 0.5s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(0,0,0,0.6); 
         }
+        
+        /* 蓋章狀態 (正常顯示) */
         .stamp.stamped { opacity: 1; transform: translate(-50%, -50%) rotate(-15deg) scale(1); }
+        
+        /* 淡化狀態 (當使用者往回捲動時) */
+        .stamp.faded { opacity: 0.05 !important; }
 
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="logo-text">URBAN WATCHERS</div>
+        <div class="logo-text">CITY GUARDIAN</div>
         <div class="date-text" id="current-date"></div>
     </div>
 
@@ -149,9 +155,7 @@
         const now = new Date();
         document.getElementById('current-date').innerText = now.getFullYear() + '.' + (now.getMonth()+1).toString().padStart(2,'0') + '.' + now.getDate().toString().padStart(2,'0');
 
-        // 2. 判斷要進入哪個版本的任務 (讀取 URL 參數 ?next=...)
-        // 如果是從 index.html 按綠色按鈕進來，通常會帶參數
-        // 預設走 V2 (Online)
+        // 2. 參數讀取
         const urlParams = new URLSearchParams(window.location.search);
         const nextVersion = urlParams.get('next') || 'v2'; 
 
@@ -182,8 +186,9 @@
         const startBtn = document.getElementById('start-btn');
         const stamp = document.getElementById('secret-stamp');
         let lineIndex = 0;
+        let isAnimationFinished = false;
 
-        // 4. 打字機效果
+        // 4. 打字機效果 (速度放慢)
         function typeWriter() {
             if (lineIndex < storyLines.length) {
                 const p = document.createElement('div');
@@ -191,15 +196,14 @@
                 p.innerHTML = storyLines[lineIndex];
                 contentBox.appendChild(p);
                 
-                // 淡入
                 setTimeout(() => { p.classList.add('visible'); }, 50);
                 
-                // 捲動到底部
+                // 每次打字都自動捲到底
                 contentBox.scrollTop = contentBox.scrollHeight;
 
                 lineIndex++;
-                // 隨機打字速度
-                const delay = Math.random() * 300 + 100; 
+                // 速度調整：原本是 300+100，現在改慢一點
+                const delay = Math.random() * 800 + 400; 
                 setTimeout(typeWriter, delay);
             } else {
                 finishAnimation();
@@ -207,6 +211,8 @@
         }
 
         function finishAnimation() {
+            isAnimationFinished = true;
+            
             // 加入游標
             const cursor = document.createElement('span');
             cursor.className = 'cursor';
@@ -222,24 +228,40 @@
             }, 500);
         }
 
-        // 5. 按鈕點擊邏輯
+        // 5. 智慧卷軸監聽 (Smart Scroll Fade)
+        contentBox.addEventListener('scroll', () => {
+            if (!isAnimationFinished) return; // 動畫還沒跑完前不干擾
+
+            // 計算距離底部的距離
+            // scrollHeight (總高度) - scrollTop (捲動位置) - clientHeight (視窗高度)
+            const distanceToBottom = contentBox.scrollHeight - contentBox.scrollTop - contentBox.clientHeight;
+
+            // 如果距離底部超過 50px (代表使用者往回捲動了)，就讓印章淡化
+            if (distanceToBottom > 50) {
+                stamp.classList.add('faded');
+            } else {
+                // 如果回到最底部，印章顯示
+                stamp.classList.remove('faded');
+            }
+        });
+
+        // 6. 按鈕點擊邏輯
         function acceptMission() {
             startBtn.innerText = "ACCESSING...";
             startBtn.style.background = "#00ff41";
             startBtn.style.color = "#000";
             
             setTimeout(() => {
-                // 根據參數導向正確的頁面
                 if (nextVersion === 'v1') {
-                    window.location.href = 'mission.html'; // 離線版
+                    window.location.href = 'mission.html'; 
                 } else {
-                    window.location.href = 'mission_v2.html'; // 線上版 (預設)
+                    window.location.href = 'mission_v2.html'; 
                 }
             }, 1000);
         }
 
         // 啟動程式
-        setTimeout(typeWriter, 500);
+        setTimeout(typeWriter, 800);
 
     </script>
 </body>
