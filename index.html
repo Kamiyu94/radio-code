@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>URBAN WATCHERS :: SYSTEM PORTAL</title>
+    <title>URBAN WATCHERS :: SYSTEM SELECT</title>
     <style>
         :root {
             --bg-color: #050505;
-            --primary: #00ff41; /* 駭客綠 */
-            --secondary: #0088ff; /* 科技藍 */
+            --online: #0088ff;  /* 線上版代表色 (藍) */
+            --offline: #ffcc00; /* 離線版代表色 (黃) */
             --border: #333;
         }
 
@@ -17,135 +17,115 @@
             color: #fff;
             font-family: 'Consolas', 'Monaco', monospace;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background-image: 
-                linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px);
-            background-size: 20px 20px;
         }
 
         .container {
-            width: 90%;
-            max-width: 400px;
+            width: 100%;
+            max-width: 450px;
             text-align: center;
-            border: 1px solid var(--border);
-            padding: 30px;
-            background: rgba(0,0,0,0.8);
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        h1 { margin: 0 0 5px 0; font-size: 1.5rem; letter-spacing: 2px; }
+        .subtitle { font-size: 0.8rem; color: #666; margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+
+        .system-block {
+            border: 1px solid #333;
+            background: rgba(255,255,255,0.03);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
             position: relative;
+            text-align: left;
         }
 
-        /* 裝飾角落 */
-        .corner { position: absolute; width: 10px; height: 10px; border: 2px solid var(--primary); transition: 0.3s; }
-        .tl { top: -1px; left: -1px; border-right: none; border-bottom: none; }
-        .tr { top: -1px; right: -1px; border-left: none; border-bottom: none; }
-        .bl { bottom: -1px; left: -1px; border-right: none; border-top: none; }
-        .br { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+        .sys-title { font-size: 0.9rem; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; }
+        .sys-badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; margin-left: 10px; color: #000; font-weight: 900; }
 
-        h1 {
-            margin: 0 0 10px 0;
-            font-size: 1.5rem;
-            letter-spacing: 2px;
-            color: #fff;
-            text-shadow: 0 0 5px rgba(255,255,255,0.5);
-        }
+        /* Online Style */
+        .online-block { border-left: 4px solid var(--online); }
+        .online-block .sys-title { color: var(--online); }
+        .online-block .sys-badge { background: var(--online); }
 
-        .subtitle {
-            font-size: 0.8rem;
-            color: #666;
-            margin-bottom: 40px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
-        }
+        /* Offline Style */
+        .offline-block { border-left: 4px solid var(--offline); }
+        .offline-block .sys-title { color: var(--offline); }
+        .offline-block .sys-badge { background: var(--offline); }
 
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+        .btn-group { display: flex; gap: 10px; }
 
         .btn {
+            flex: 1;
             display: block;
             text-decoration: none;
-            padding: 15px;
+            padding: 10px;
             border: 1px solid #444;
-            color: #888;
-            font-size: 1.1rem;
-            font-weight: bold;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-            text-transform: uppercase;
+            color: #ccc;
+            font-size: 0.9rem;
+            text-align: center;
+            border-radius: 4px;
+            transition: 0.2s;
         }
 
-        /* Agent Button Style */
-        .btn-agent {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-        .btn-agent:hover {
-            background: var(--primary);
-            color: #000;
-            box-shadow: 0 0 15px var(--primary);
-        }
+        .btn:hover { background: #222; color: #fff; border-color: #fff; }
+        
+        .btn-main { background: #222; border-color: #666; font-weight: bold; color: #fff; }
 
-        /* HQ Button Style */
-        .btn-hq {
-            border-color: var(--secondary);
-            color: var(--secondary);
+        .intro-btn {
+            display: block; margin-bottom: 30px; padding: 15px; 
+            border: 1px dashed #444; color: #00ff41; text-decoration: none;
+            font-weight: bold; letter-spacing: 1px;
         }
-        .btn-hq:hover {
-            background: var(--secondary);
-            color: #000;
-            box-shadow: 0 0 15px var(--secondary);
-        }
-
-        .btn::before {
-            content: '>';
-            position: absolute;
-            left: 15px;
-            opacity: 0;
-            transition: 0.3s;
-        }
-        .btn:hover::before { opacity: 1; left: 20px; }
-
-        .footer {
-            margin-top: 40px;
-            font-size: 0.7rem;
-            color: #444;
-        }
+        .intro-btn:hover { background: rgba(0, 255, 65, 0.1); border-color: #00ff41; }
 
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="corner tl"></div><div class="corner tr"></div>
-        <div class="corner bl"></div><div class="corner br"></div>
-
         <h1>URBAN WATCHERS</h1>
-        <div class="subtitle">TACTICAL COMMUNICATION SYSTEM</div>
+        <div class="subtitle">TACTICAL OPERATION SYSTEMS</div>
 
-        <div class="btn-group">
-            <a href="briefing.html" class="btn btn-agent">
-                FIELD AGENT ACCESS<br>
-                <span style="font-size:0.7rem; opacity:0.8;">學員 / 特務入口</span>
-            </a>
+        <a href="briefing.html" class="intro-btn">
+            📂 任務簡報 (Briefing) <br>
+            <span style="font-size:0.7rem; opacity:0.7; font-weight:normal;">學員由此進入觀看劇情</span>
+        </a>
 
-            <a href="hq_v2.html" class="btn btn-hq">
-                HQ COMMAND CENTER<br>
-                <span style="font-size:0.7rem; opacity:0.8;">教官 / 指揮中心</span>
-            </a>
+        <div class="system-block online-block">
+            <div class="sys-title">
+                SYSTEM V2 (ONLINE)
+                <span class="sys-badge">RECOMMENDED</span>
+            </div>
+            <div style="font-size:0.7rem; color:#888; margin-bottom:15px;">
+                需連接網路 / 支援即時監控 / 自動派發任務
+            </div>
+            <div class="btn-group">
+                <a href="hq_v2.html" class="btn btn-main">📡 HQ (教官)</a>
+                <a href="mission_v2.html" class="btn">📱 Mission (學員)</a>
+            </div>
         </div>
 
-        <div class="footer">
-            SYSTEM STATUS: ONLINE<br>
-            SECURE CONNECTION
+        <div class="system-block offline-block">
+            <div class="sys-title">
+                SYSTEM V1 (OFFLINE)
+                <span class="sys-badge">BACKUP</span>
+            </div>
+            <div style="font-size:0.7rem; color:#888; margin-bottom:15px;">
+                不需資料庫 / 手動查表 / QR Code 產生器
+            </div>
+            <div class="btn-group">
+                <a href="hq_offline.html" class="btn btn-main">🛠️ HQ (工具/場佈)</a>
+                <a href="mission.html" class="btn">📱 Mission (學員)</a>
+            </div>
+        </div>
+
+        <div style="font-size:0.6rem; color:#444; margin-top:20px;">
+            請確認您的活動模式後再選擇入口
         </div>
     </div>
 
