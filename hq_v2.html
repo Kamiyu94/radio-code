@@ -83,9 +83,9 @@
         
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- 2. ASSET DATA ---
-        
-        // (1) 共通物品清單：這是四個小隊書本裡都有的物品，確保遊戲順暢 (順序很重要，請勿更動)
+        // --- 2. ASSET DATA (完整四小隊資料) ---
+
+        // (1) 共通物品清單：這是四個小隊書本裡都有的物品，確保遊戲順暢
         const ITEMS_LIST = [
             // 水果類 (12種)
             "葡萄", "西瓜", "橘子", "檸檬", "蘋果", "梨子", 
@@ -97,7 +97,7 @@
             "薰衣草", "薄荷", "松樹", "雛菊", "貝殼"
         ];
 
-        // (2) 密碼種子：對應上方清單的密碼
+        // (2) 密碼種子：已包含 A, B, C, D 四小隊完整密碼
         const SEEDS = {
             // Alpha Team (A)
             A: [
@@ -142,9 +142,7 @@
             if(index < SEEDS.D.length) CODE_BOOKS.D[item] = SEEDS.D[index];
         });
 
-        // (4) 遊戲資產 (MASTER_ASSETS)
-        // 為了讓您的 startNewGame 邏輯能繼續運作，我們必須重建這個物件
-        // 但這裡只包含上面的「安全名單」內的物品
+        // (4) 遊戲資產 (MASTER_ASSETS) - 僅包含安全名單內的物品
         const MASTER_ASSETS = {
             fruits: [
                 {n:"葡萄", i:"🍇"}, {n:"西瓜", i:"🍉"}, {n:"橘子", i:"🍊"}, {n:"檸檬", i:"🍋"},
@@ -161,22 +159,21 @@
                 {n:"雛菊", i:"🌼"}, {n:"貝殼", i:"🐚"}
             ]
         };
-        
-        // 為了相容性，保留這個變數 (指向 Alpha 密碼本)
+
+        // 為了相容性，保留這個變數
         const FIXED_CODE_MAP = CODE_BOOKS.A;
 
         // --- 3. LOGIC ---
+        // (這裡不需要動，請保留原本的 shuffle, generateRandomCode 等 helper functions...)
 
-        function shuffle(array) {
-            return array.sort(() => Math.random() - 0.5);
-        }
 
+        // --- 4. PRINT FUNCTION (已更新為 CITY GUARDIAN) ---
         function generateCodeBook() {
-            // 1. 設定列印樣式：每一頁都有邊框，並且強制分頁
+            // 1. 設定列印樣式
             let html = `<html><head><title>MISSION CODE BOOKS (ALL TEAMS)</title><style>
                 body { font-family: "Microsoft JhengHei", sans-serif; -webkit-print-color-adjust: exact; }
                 .page { 
-                    page-break-after: always; /* 關鍵：強制分頁 */
+                    page-break-after: always; 
                     padding: 40px; 
                     border: 5px solid #000; 
                     height: 95vh; 
@@ -186,8 +183,8 @@
                 h1 { text-align: center; border-bottom: 3px solid #000; margin-bottom: 10px; text-transform: uppercase; }
                 .team-badge { 
                     text-align: center; font-size: 2.5rem; font-weight: 900; 
-                    background: #000; color: #fff; padding: 10px; margin-bottom: 20px; 
-                    border-radius: 8px;
+                    color: #fff; padding: 10px; margin-bottom: 20px; 
+                    border-radius: 8px; text-shadow: 1px 1px 2px #000;
                 }
                 .warning { color: red; text-align: center; font-weight: bold; margin-bottom: 20px; border: 2px solid red; padding: 5px; }
                 .grid { 
@@ -204,35 +201,43 @@
                 /* 浮水印效果 */
                 .watermark {
                     position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
-                    font-size: 8rem; opacity: 0.05; font-weight: bold; pointer-events: none; white-space: nowrap;
+                    font-size: 6rem; opacity: 0.05; font-weight: bold; pointer-events: none; white-space: nowrap; z-index:0;
+                }
+                .footer {
+                    position: absolute; bottom: 20px; width: 100%; text-align: center; font-size: 0.8rem; color: #666;
+                    font-weight: bold; letter-spacing: 1px;
                 }
             </style></head><body>`;
 
             // 2. 定義四個小隊的資訊
             const teams = ['A', 'B', 'C', 'D'];
             const teamInfo = {
-                'A': { name: 'ALPHA TEAM', color: '#FF3333' },
-                'B': { name: 'BRAVO TEAM', color: '#33FF33' },
-                'C': { name: 'CHARLIE TEAM', color: '#3388FF' },
-                'D': { name: 'DELTA TEAM', color: '#FFFF33' }
+                'A': { name: 'ALPHA TEAM', color: '#CC0000' }, // 深紅
+                'B': { name: 'BRAVO TEAM', color: '#009900' }, // 深綠
+                'C': { name: 'CHARLIE TEAM', color: '#0033CC' }, // 深藍
+                'D': { name: 'DELTA TEAM', color: '#CCAA00' }  // 深黃
             };
 
             // 3. 迴圈生成 4 個頁面
             teams.forEach(team => {
-                const bookData = CODE_BOOKS[team]; // 抓取該小隊專屬的密碼
+                const bookData = CODE_BOOKS[team]; 
+                
+                if (!bookData || Object.keys(bookData).length === 0) {
+                    console.error(`Code book data missing for team ${team}`);
+                    return;
+                }
+
                 const info = teamInfo[team];
 
                 html += `
                 <div class="page">
                     <div class="watermark">${info.name}</div>
-                    <div class="team-badge" style="color:${info.color}">${info.name}</div>
+                    <div class="team-badge" style="background:${info.color}">${info.name}</div>
                     <h1>專用通訊代碼本</h1>
                     <div class="warning">⚠️ 機密文件：僅限該小隊使用，禁止出示給他隊觀看 ⚠️</div>
                     
                     <div class="grid">`;
                 
-                // 列印該小隊的所有物品與對應密碼
-                // 先依照物品名稱排序，方便查找
                 Object.keys(bookData).sort().forEach(itemName => {
                     html += `
                     <div class="item">
@@ -241,10 +246,11 @@
                     </div>`;
                 });
 
+                // 更新頁尾為 CITY GUARDIAN
                 html += `
                     </div>
-                    <div style="position: absolute; bottom: 20px; width: 100%; text-align: center; font-size: 0.8rem; color: #666;">
-                        URBAN WATCHERS TACTICAL SYSTEM - DO NOT DISTRIBUTE
+                    <div class="footer">
+                        CITY GUARDIAN TACTICAL SYSTEM - DO NOT DISTRIBUTE
                     </div>
                 </div>`;
             });
