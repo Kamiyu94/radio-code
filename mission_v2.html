@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FIELD TERMINAL (ONLINE)</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        /* (保留原本的 CSS 樣式，只修改與連線相關的部分) */
+        :root { --bg-color: #000000; --text-main: #e0e0e0; --highlight: #00ff41; --danger: #ff3333; --warning: #ffcc00; --cool: #00ffff; --panel-bg: #111111; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Consolas', 'Monaco', monospace; margin: 0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+        .hidden { display: none !important; }
+        .screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 20px; padding-top: 10vh; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: #000; z-index: 1; overflow-y: auto; }
+        h1, h2 { text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 20px; }
+        .input-box { background: #000; border: 2px solid var(--highlight); color: var(--highlight); font-size: 2rem; padding: 15px; width: 100%; max-width: 300px; text-align: center; border-radius: 8px; margin-bottom: 20px; outline: none; font-family: inherit; text-transform: uppercase; user-select: text; }
+        .btn { background: var(--panel-bg); border: 1px solid var(--highlight); color: var(--highlight); padding: 15px 30px; font-size: 1.2rem; border-radius: 8px; cursor: pointer; text-transform: uppercase; font-weight: bold; width: 100%; max-width: 300px; margin-bottom: 15px; flex-shrink: 0; }
+        .btn:active { background: var(--highlight); color: #000; transform: scale(0.98); }
+        .target-icon { font-size: 6rem; margin-bottom: 10px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.05);} 100% {transform: scale(1);} }
+        .mission-hint { color: #888; font-size: 0.9rem; text-align: center; margin-bottom: 30px; max-width: 80%; }
+        .attempts-left { color: var(--danger); margin-top: 10px; font-size: 0.9rem; }
+        #screen-locked { background: #200000; border: 5px solid red; z-index: 20; justify-content: center; padding-top: 20px; }
+        .lock-icon { font-size: 5rem; color: red; margin-bottom: 20px; cursor: pointer; }
+        #screen-success { background: #001a00; z-index: 20; text-align: center; padding-top: 5vh; }
+        .success-icon { font-size: 5rem; color: var(--highlight); margin-bottom: 20px; }
+        .next-step-box { border: 1px dashed var(--highlight); padding: 15px; border-radius: 8px; background: rgba(0, 255, 65, 0.1); margin-bottom: 10px; width: 100%; max-width: 320px; }
+        .step-label { color: #888; font-size: 0.8rem; display: block; margin-bottom: 5px; }
+        .step-val { color: #fff; font-size: 1.1rem; font-weight: bold; display: block; line-height: 1.4; }
+        .comm-val { color: #ffcc00; font-size: 1rem; font-weight: bold; display: block; line-height: 1.4; white-space: pre-line; }
+        
+        /* Loading Spinner */
+        .spinner { border: 4px solid #333; border-top: 4px solid var(--highlight); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="screen-loading" class="screen" style="justify-content:center; z-index:100;">
+        <div class="spinner"></div>
+        <div style="color:#666;">ESTABLISHING UPLINK...</div>
+    </div>
+
+    <div id="screen-error" class="screen hidden" style="justify-content:center; z-index:100;">
+        <h2 style="color:red;">CONNECTION FAILED</h2>
+        <p id="error-msg" style="color:#888; text-align:center;">NO ACTIVE MISSION FOUND</p>
+        <button class="btn" onclick="location.reload()">RETRY</button>
+    </div>
+
+    <div id="screen-pin" class="screen hidden">
+        <h2>TERMINAL ACCESS</h2>
+        <p style="color:#666; margin-bottom:20px;">SECURITY CLEARANCE REQUIRED</p>
+        <input type="number" id="pin-input" class="input-box" placeholder="PIN CODE">
+        <button class="btn" onclick="checkPin()">ENTER</button>
+    </div>
+
+    <div id="screen-mission" class="screen hidden">
+        <div style="text-align:right; width:100%; padding:10px; color:#444; font-size:0.8rem;">SECURE CONNECTION (LIVE)</div>
+        <div id="target-display" class="target-icon">❓</div>
+        <div id="target-name" style="font-size:1.5rem; font-weight:bold; margin-bottom:5px;">TARGET</div>
+        <p class="mission-hint">向友軍單位索取解鎖代碼<br>REQUEST CODE FROM ALLY</p>
+        <input type="text" id="mission-input" class="input-box" placeholder="CODE" maxlength="10">
+        <button class="btn" onclick="verifyCode()">VERIFY CODE</button>
+        <div id="attempts-display" class="attempts-left hidden">⚠ 密碼錯誤 (剩餘 2 次機會)</div>
+    </div>
+
+    <div id="screen-locked" class="screen hidden">
+        <div class="lock-icon" onclick="unlockTap()">❌</div>
+        <div class="lock-msg" style="color:red; font-size:1.5rem; font-weight:bold; text-align:center;">
+            SYSTEM LOCKED<br>PLEASE CONTACT HQ
+        </div>
+    </div>
+
+    <div id="screen-success" class="screen hidden">
+        <div class="success-icon">✅</div>
+        <div class="success-title">ACCESS GRANTED</div>
+        <div class="next-step-box">
+            <span class="step-label">NEXT LOCATION (下一站)</span>
+            <span id="success-next-loc" class="step-val">...</span>
+        </div>
+        <div class="next-step-box">
+            <span class="step-label">COMM PROTOCOL (通訊指令)</span>
+            <span id="success-comm-msg" class="comm-val">...</span>
+        </div>
+        <p style="color:#666; font-size:0.8rem; margin-top:20px;">DATA UPLOADED TO HQ</p>
+    </div>
+
+    <div id="rescue-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; flex-direction:column; align-items:center; justify-content:center;">
+        <h2 style="color:red;">OVERRIDE LOCK</h2>
+        <input type="number" id="rescue-input" class="input-box" placeholder="RESCUE CODE">
+        <button class="btn" style="border-color:red; color:red;" onclick="attemptRescue()">UNLOCK</button>
+        <button class="btn" style="border-color:#666; color:#666;" onclick="document.getElementById('rescue-modal').style.display='none'">CANCEL</button>
+    </div>
+
+    <script>
+        const SUPABASE_URL = '你的_SUPABASE_URL';
+        const SUPABASE_KEY = '你的_ANON_KEY';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const missionId = urlParams.get('id'); // e.g., 'loc_1'
+
+        // Local State
+        let dbId = null;
+        let correctCode = null;
+        let nextHint = "";
+        let commMsg = "";
+        let missionCat = "";
+
+        // Persistent State
+        let wrongAttempts = parseInt(localStorage.getItem(`attempts_${missionId}`)) || 0;
+        let isLocked = localStorage.getItem('global_device_status') === 'LOCKED';
+
+        // Rescue Codes (Offline fallback logic is fine here)
+        const rescueCodes = { 'fruits': ['7001'], 'animals': ['8001'], 'plants': ['9001'] }; // Simplified for demo
+
+        window.onload = async () => {
+            if (!missionId) { showError("INVALID TERMINAL ID"); return; }
+            if (isLocked) { showScreen('screen-locked'); return; }
+
+            // Fetch Mission Data
+            try {
+                // 1. Get latest active session
+                const { data: sessions, error: sErr } = await supabase.from('game_sessions').select('id').eq('is_active', true).order('created_at', {ascending:false}).limit(1);
+                if (sErr || !sessions.length) throw new Error("NO ACTIVE GAME SESSION");
+                
+                // 2. Get mission details
+                const { data: mission, error: mErr } = await supabase.from('mission_states')
+                    .select('*')
+                    .eq('session_id', sessions[0].id)
+                    .eq('location_id', missionId)
+                    .single();
+
+                if (mErr || !mission) throw new Error("MISSION DATA NOT FOUND");
+
+                // 3. Populate Data
+                dbId = mission.id;
+                correctCode = mission.code;
+                nextHint = mission.next_hint;
+                commMsg = mission.comm_msg;
+                missionCat = mission.category;
+
+                document.getElementById('target-display').innerText = mission.icon;
+                document.getElementById('target-name').innerText = mission.name;
+
+                // 4. Check if already solved (Optional: allow re-entry or show success)
+                if (mission.is_solved) {
+                    showSuccessScreen();
+                } else {
+                    showScreen('screen-pin');
+                }
+
+            } catch (e) {
+                console.error(e);
+                showError(e.message);
+            }
+        };
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function showError(msg) {
+            showScreen('screen-error');
+            document.getElementById('error-msg').innerText = msg;
+        }
+
+        function checkPin() {
+            const pin = document.getElementById('pin-input').value;
+            if (pin === '2758') showScreen('screen-mission');
+            else if (pin === '8964') { localStorage.clear(); location.reload(); } // Hard reset
+            else { alert('WRONG PIN'); document.getElementById('pin-input').value=''; }
+        }
+
+        async function verifyCode() {
+            const inputEl = document.getElementById('mission-input');
+            let rawInput = inputEl.value.toUpperCase();
+            
+            // Fuzzy Logic: 0 -> O
+            let cleanInput = rawInput.replace(/[^A-Z0-9]/g, '').replace(/0/g, 'O');
+            let target = correctCode.replace(/0/g, 'O');
+
+            if (cleanInput === target) {
+                // Success!
+                await supabase.from('mission_states').update({ is_solved: true, solved_at: new Date() }).eq('id', dbId);
+                localStorage.removeItem(`attempts_${missionId}`);
+                showSuccessScreen();
+            } else {
+                // Fail
+                wrongAttempts++;
+                localStorage.setItem(`attempts_${missionId}`, wrongAttempts);
+                inputEl.value = '';
+                inputEl.style.borderColor = 'red';
+                setTimeout(()=>inputEl.style.borderColor='var(--highlight)', 500);
+
+                if (wrongAttempts >= 3) {
+                    localStorage.setItem('global_device_status', 'LOCKED');
+                    showScreen('screen-locked');
+                } else {
+                    const el = document.getElementById('attempts-display');
+                    el.classList.remove('hidden');
+                    el.innerText = `⚠ 密碼錯誤 (剩餘 ${3-wrongAttempts} 次機會)`;
+                }
+            }
+        }
+
+        function showSuccessScreen() {
+            document.getElementById('success-next-loc').innerText = nextHint;
+            document.getElementById('success-comm-msg').innerText = commMsg;
+            showScreen('screen-success');
+        }
+
+        // Tap to unlock logic (simplified)
+        let tapCount = 0;
+        function unlockTap() {
+            tapCount++;
+            if (tapCount >= 5) {
+                tapCount = 0;
+                document.getElementById('rescue-modal').style.display = 'flex';
+            }
+            setTimeout(() => tapCount = 0, 1000);
+        }
+
+        function attemptRescue() {
+            const code = document.getElementById('rescue-input').value;
+             // Demo valid code check. In real game, check against missionCat
+            if (code === '7001' || code === '8001' || code === '9001') { 
+                localStorage.setItem('global_device_status', 'FRESH');
+                localStorage.setItem(`attempts_${missionId}`, 0);
+                location.reload();
+            } else {
+                alert('INVALID CODE');
+            }
+        }
+    </script>
+</body>
+</html>
