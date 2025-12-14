@@ -210,48 +210,53 @@
 
     <script>
         // --- DATA CONFIGURATION ---
+        // 修改說明：
+        // 1. next 欄位：移除了括號內的提示文字 (如：(狼))，只保留 LOC 編號。
+        // 2. comm 欄位：統一頻道為 [主頻 CH1 / 備頻 CH3] 或 [主頻 CH2 / 備頻 CH4]。
+        // 3. hq 結尾：通訊指令統一改為「切換至 [救援頻道]」並回報。
+
         const missions = {
             // --- Phase 1: Fruits (Start) ---
             'loc_1': { i: '🍌', n: '香蕉', c: 'A3O7', cat: 'fruits', 
-                       next: '前往 LOC 5 (狼)', 
-                       comm: '切換至 [主頻 CH2 / 備頻 CH6]。\n切換後，請呼叫該頻道的友軍單位。' }, 
+                       next: '前往 LOC 5', 
+                       comm: '切換至 [主頻 CH1 / 備頻 CH3]。\n切換後，請呼叫該頻道的友軍單位。' }, 
             'loc_2': { i: '🍎', n: '蘋果', c: 'X4T9', cat: 'fruits', 
-                       next: '前往 LOC 7 (熊)', 
+                       next: '前往 LOC 7', 
                        comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
             'loc_3': { i: '🥝', n: '奇異果', c: 'J6H2', cat: 'fruits', 
-                       next: '前往 LOC 6 (獅子)', 
+                       next: '前往 LOC 6', 
                        comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
             'loc_4': { i: '🍓', n: '草莓', c: 'V1G5', cat: 'fruits', 
-                       next: '前往 LOC 8 (老虎)', 
-                       comm: '切換至 [主頻 CH3 / 備頻 CH7]。\n切換後，請呼叫該頻道的友軍單位。' }, 
+                       next: '前往 LOC 8', 
+                       comm: '切換至 [主頻 CH2 / 備頻 CH4]。\n切換後，請呼叫該頻道的友軍單位。' }, 
             
             // --- Phase 2: Animals (Mid) ---
             'loc_5': { i: '🐺', n: '狼', c: 'F6B2', cat: 'animals',
-                       next: '前往 LOC 9 (幸運草)', 
-                       comm: '切換至 [主頻 CH3 / 備頻 CH7]。\n切換後，請呼叫該頻道的友軍單位。' }, 
+                       next: '前往 LOC 9', 
+                       comm: '切換至 [主頻 CH1 / 備頻 CH3]。\n切換後，請呼叫該頻道的友軍單位。' }, 
             'loc_6': { i: '🦁', n: '獅子', c: 'C7M1', cat: 'animals',
-                       next: '前往 LOC 11 (椰子樹)', 
+                       next: '前往 LOC 11', 
                        comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
             'loc_7': { i: '🐻', n: '熊', c: 'R3Z5', cat: 'animals',
-                       next: '前往 LOC 10 (仙人掌)', 
-                       comm: '切換至 [主頻 CH4 / 備頻 CH8]。\n切換後，請呼叫該頻道的友軍單位。' }, 
+                       next: '前往 LOC 10', 
+                       comm: '切換至 [主頻 CH2 / 備頻 CH4]。\n切換後，請呼叫該頻道的友軍單位。' }, 
             'loc_8': { i: '🐯', n: '老虎', c: 'Y5N8', cat: 'animals',
-                       next: '前往 LOC 12 (松樹)', 
+                       next: '前往 LOC 12', 
                        comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
 
             // --- Phase 3: Plants (End) ---
             'hq_a': { i: '🍀', n: '幸運草', c: 'N9T4', cat: 'plants',
                       next: 'MISSION ACCOMPLISHED', 
-                      comm: '通訊鏈路已重建。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
+                      comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
             'hq_b': { i: '🌴', n: '椰子樹', c: 'C5Y9', cat: 'plants',
                       next: 'MISSION ACCOMPLISHED', 
-                      comm: '通訊鏈路已重建。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
+                      comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
             'hq_c': { i: '🌵', n: '仙人掌', c: 'H5I0', cat: 'plants',
                       next: 'MISSION ACCOMPLISHED', 
-                      comm: '通訊鏈路已重建。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
+                      comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
             'hq_d': { i: '🌲', n: '松樹', c: 'J3R6', cat: 'plants',
                       next: 'MISSION ACCOMPLISHED', 
-                      comm: '通訊鏈路已重建。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }  
+                      comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }   
         };
 
         const rescueCodes = {
