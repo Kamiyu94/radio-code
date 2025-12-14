@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FIELD TERMINAL</title>
+    <title>FIELD TERMINAL (OFFLINE)</title>
     <style>
         :root {
             --bg-color: #000000;
@@ -32,15 +32,14 @@
 
         .hidden { display: none !important; }
         
-        /* 關鍵修正: 改為靠上對齊，並允許垂直捲動，避免鍵盤遮擋 */
         .screen { 
             flex: 1; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            justify-content: flex-start; /* 內容靠上 */
+            justify-content: flex-start;
             padding: 20px; 
-            padding-top: 10vh; /* 頂部留空 */
+            padding-top: 10vh;
             width: 100%; 
             height: 100%; 
             position: absolute; 
@@ -48,7 +47,7 @@
             left: 0; 
             background: #000; 
             z-index: 1; 
-            overflow-y: auto; /* 允許捲動 */
+            overflow-y: auto; 
         }
 
         /* --- UI Components --- */
@@ -85,7 +84,7 @@
             max-width: 300px;
             margin-bottom: 15px;
             transition: all 0.2s;
-            flex-shrink: 0; /* 確保按鈕不會被擠壓 */
+            flex-shrink: 0; 
         }
 
         .btn:active { background: var(--highlight); color: #000; transform: scale(0.98); }
@@ -210,53 +209,31 @@
 
     <script>
         // --- DATA CONFIGURATION ---
-        // 修改說明：
-        // 1. next 欄位：移除了括號內的提示文字 (如：(狼))，只保留 LOC 編號。
-        // 2. comm 欄位：統一頻道為 [主頻 CH1 / 備頻 CH3] 或 [主頻 CH2 / 備頻 CH4]。
-        // 3. hq 結尾：通訊指令統一改為「切換至 [救援頻道]」並回報。
-
         const missions = {
-            // --- Phase 1: Fruits (Start) ---
-            'loc_1': { i: '🍌', n: '香蕉', c: 'A3O7', cat: 'fruits', 
-                       next: '前往 LOC 5', 
-                       comm: '切換至 [主頻 CH1 / 備頻 CH3]。\n切換後，請呼叫該頻道的友軍單位。' }, 
-            'loc_2': { i: '🍎', n: '蘋果', c: 'X4T9', cat: 'fruits', 
-                       next: '前往 LOC 7', 
-                       comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
-            'loc_3': { i: '🥝', n: '奇異果', c: 'J6H2', cat: 'fruits', 
-                       next: '前往 LOC 6', 
-                       comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
-            'loc_4': { i: '🍓', n: '草莓', c: 'V1G5', cat: 'fruits', 
-                       next: '前往 LOC 8', 
-                       comm: '切換至 [主頻 CH2 / 備頻 CH4]。\n切換後，請呼叫該頻道的友軍單位。' }, 
+            // Phase 1: Fruits
+            'loc_1': { i: '🍌', n: '香蕉', c: 'A3O7', cat: 'fruits', next: '前往 LOC 5', comm: '切換至 [主頻 CH1 / 備頻 CH3]。\n切換後，請呼叫該頻道的友軍單位。' }, 
+            'loc_2': { i: '🍎', n: '蘋果', c: 'X4T9', cat: 'fruits', next: '前往 LOC 7', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
+            'loc_3': { i: '🥝', n: '奇異果', c: 'J6H2', cat: 'fruits', next: '前往 LOC 6', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
+            'loc_4': { i: '🍓', n: '草莓', c: 'V1G5', cat: 'fruits', next: '前往 LOC 8', comm: '切換至 [主頻 CH2 / 備頻 CH4]。\n切換後，請呼叫該頻道的友軍單位。' }, 
             
-            // --- Phase 2: Animals (Mid) ---
-            'loc_5': { i: '🐺', n: '狼', c: 'F6B2', cat: 'animals',
-                       next: '前往 LOC 9', 
-                       comm: '切換至 [主頻 CH1 / 備頻 CH3]。\n切換後，請呼叫該頻道的友軍單位。' }, 
-            'loc_6': { i: '🦁', n: '獅子', c: 'C7M1', cat: 'animals',
-                       next: '前往 LOC 11', 
-                       comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
-            'loc_7': { i: '🐻', n: '熊', c: 'R3Z5', cat: 'animals',
-                       next: '前往 LOC 10', 
-                       comm: '切換至 [主頻 CH2 / 備頻 CH4]。\n切換後，請呼叫該頻道的友軍單位。' }, 
-            'loc_8': { i: '🐯', n: '老虎', c: 'Y5N8', cat: 'animals',
-                       next: '前往 LOC 12', 
-                       comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
+            // Phase 2: Animals
+            'loc_5': { i: '🐺', n: '狼', c: 'F6B2', cat: 'animals', next: '前往 LOC 9', comm: '切換至 [主頻 CH1 / 備頻 CH3]。\n切換後，請呼叫該頻道的友軍單位。' }, 
+            'loc_6': { i: '🦁', n: '獅子', c: 'C7M1', cat: 'animals', next: '前往 LOC 11', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
+            'loc_7': { i: '🐻', n: '熊', c: 'R3Z5', cat: 'animals', next: '前往 LOC 10', comm: '切換至 [主頻 CH2 / 備頻 CH4]。\n切換後，請呼叫該頻道的友軍單位。' }, 
+            'loc_8': { i: '🐯', n: '老虎', c: 'Y5N8', cat: 'animals', next: '前往 LOC 12', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
 
-            // --- Phase 3: Plants (End) ---
-            'hq_a': { i: '🍀', n: '幸運草', c: 'N9T4', cat: 'plants',
-                      next: 'MISSION ACCOMPLISHED', 
-                      comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
-            'hq_b': { i: '🌴', n: '椰子樹', c: 'C5Y9', cat: 'plants',
-                      next: 'MISSION ACCOMPLISHED', 
-                      comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
-            'hq_c': { i: '🌵', n: '仙人掌', c: 'H5I0', cat: 'plants',
-                      next: 'MISSION ACCOMPLISHED', 
-                      comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
-            'hq_d': { i: '🌲', n: '松樹', c: 'J3R6', cat: 'plants',
-                      next: 'MISSION ACCOMPLISHED', 
-                      comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }   
+            // Phase 3: Plants (ALL LOC NOW)
+            // loc_9 (原 hq_a) for Team A
+            'loc_9': { i: '🍀', n: '幸運草', c: 'N9T4', cat: 'plants', next: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
+            
+            // loc_10 (原 hq_c) for Team C? No wait, Team B goes 2->7->10 based on logic
+            'loc_10': { i: '🌵', n: '仙人掌', c: 'H5I0', cat: 'plants', next: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
+            
+            // loc_11 (原 hq_b) for Team C (3->6->11)
+            'loc_11': { i: '🌴', n: '椰子樹', c: 'C5Y9', cat: 'plants', next: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
+            
+            // loc_12 (原 hq_d) for Team D
+            'loc_12': { i: '🌲', n: '松樹', c: 'J3R6', cat: 'plants', next: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }    
         };
 
         const rescueCodes = {
@@ -274,12 +251,46 @@
         let wrongAttempts = parseInt(localStorage.getItem(`attempts_${missionId}`)) || 0;
         let usedRescueCodes = JSON.parse(localStorage.getItem('used_rescue')) || [];
 
-        // --- INITIALIZATION ---
+        // --- INITIALIZATION (修正版：加入選單 + 排序 LOC 1-12) ---
         window.onload = function() {
+            // 如果網址沒有 ID，或者 ID 不在名單內
             if (!missionId || !missions[missionId]) {
-                document.body.innerHTML = '<h1 style="color:red; padding:50px;">INVALID TERMINAL ID</h1>';
+                
+                // 產生選單 HTML (1-12)
+                const orderedKeys = [
+                    'loc_1','loc_2','loc_3','loc_4',
+                    'loc_5','loc_6','loc_7','loc_8',
+                    'loc_9','loc_10','loc_11','loc_12'
+                ];
+
+                let menuHtml = `
+                    <div style="padding:20px; height:100vh; overflow-y:auto; display:flex; flex-direction:column; align-items:center;">
+                        <h1 style="color:var(--highlight); margin-bottom:10px;">TERMINAL SELECT</h1>
+                        <p style="color:#666; margin-bottom:20px;">OFFLINE MODE</p>
+                        <div style="width:100%; max-width:320px;">
+                `;
+                
+                orderedKeys.forEach(key => {
+                    const m = missions[key];
+                    if(m) {
+                        menuHtml += `
+                            <button class="btn" style="margin-bottom:10px; text-align:left; padding:15px; display:flex; align-items:center;" onclick="window.location.search='?id=${key}'">
+                                <span style="font-size:1.5rem; margin-right:15px; width:40px; text-align:center;">${m.i}</span>
+                                <div>
+                                    <div style="font-size:1rem; font-weight:bold;">${m.n}</div>
+                                    <div style="font-size:0.7rem; opacity:0.6;">ID: ${key.toUpperCase()}</div>
+                                </div>
+                            </button>
+                        `;
+                    }
+                });
+                
+                menuHtml += '</div></div>';
+                document.body.innerHTML = menuHtml;
                 return;
             }
+
+            // 以下為原本的正常邏輯
             missionData = missions[missionId];
 
             if (globalStatus === 'LOCKED') {
