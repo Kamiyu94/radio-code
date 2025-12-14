@@ -103,6 +103,7 @@
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
             padding: 20px; padding-top: 5vh;
             background: #000; z-index: 10;
+            overflow-y: auto; /* 允許捲動以看到底部的重置按鈕 */
         }
 
         .input-box {
@@ -128,7 +129,7 @@
         .call-target { font-size: 1.8rem; font-weight: 900; display: block; letter-spacing: 1px; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
 
         .my-book-btn {
-            margin-top: auto; margin-bottom: 30px; 
+            margin-top: 20px; margin-bottom: 30px; 
             background: #111; color: #fff; border: 1px solid #666;
             padding: 15px; width: 100%; max-width: 300px; font-size: 1rem; cursor: pointer;
             display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 8px;
@@ -198,6 +199,10 @@
             <button class="my-book-btn" onclick="openMyBook()">
                 <span>📖 開啟我的密碼本</span>
             </button>
+
+            <div style="margin-top:20px; margin-bottom:20px; font-size:0.8rem; color:#444; text-decoration:underline; cursor:pointer;" onclick="clearIdentity()">
+                [ 重選小隊 / RESET IDENTITY ]
+            </div>
         </div>
 
         <div id="screen-success" class="screen hidden" style="background:#001a00;">
@@ -216,7 +221,7 @@
             <p style="color:#666; text-align:center;">WAITING FOR HQ SIGNAL</p>
             <div style="color:#444; font-size:0.8rem; margin-top:10px;">請教官在 HQ 端啟動戰局</div>
             <button class="btn" style="margin-top:20px;" onclick="location.reload()">RECONNECT</button>
-            <button class="btn" style="margin-top:20px; border-color:#666; color:#666;" onclick="clearIdentity()">RESET IDENTITY</button>
+            <button class="btn" style="margin-top:20px; border-color:#444; color:#666;" onclick="clearIdentity()">RESET IDENTITY</button>
         </div>
 
     </div>
@@ -227,7 +232,7 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxaGdwZXVvZWpkeW9kYW52YXV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDUyMzAsImV4cCI6MjA3OTA4MTIzMH0.my3U8mN06xm79ArFamTpWydf7rYFXOKT5-ooKmqb_O4';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- 2. 靜態資料 (用於顯示密碼本 & 判斷呼叫對象) ---
+        // --- 2. 靜態資料 ---
         const TEAM_INFO = {
             'A': { name: 'ALPHA SQUAD', color: 'var(--alpha)', display: '🔴 ALPHA' },
             'B': { name: 'BRAVO SQUAD', color: 'var(--bravo)', display: '🟢 BRAVO' },
@@ -235,7 +240,6 @@
             'D': { name: 'DELTA SQUAD', color: 'var(--delta)', display: '🟡 DELTA' }
         };
 
-        // 這些資料用來讓學員看「自己的書」
         const SEEDS = {
             A: ["L2Z5", "P8K3", "S4M1", "T4W7", "X4T9", "Q4Y9", "B1D6", "K7X1", "V2C5", "O6A4", "U9E2", "Z3N7", "C7M1", "D5S2", "X2U5", "R9S6", "N3Y0", "G6P9", "G2V4", "B8H7", "L6P2", "F5G8", "Z7D5", "K3I6", "E2A4", "J3R6", "C6U3", "P8M5"],
             B: ["L3T6", "D8M3", "Z8A4", "W5Y3", "C5K1", "B2H9", "I1R8", "J9S0", "D1E5", "B6C9", "G7Q5", "U6Q4", "P5Q9", "B2C8", "H9I2", "D7E1", "W6X3", "U4V0", "F3G8", "H5I0", "U7V1", "L6N3", "Z7D5", "Z5A3", "B9C4", "O8P2", "W2Y6", "D1E8"],
@@ -249,7 +253,6 @@
             plants: [{n:"向日葵", i:"🌻"}, {n:"仙人掌", i:"🌵"}, {n:"竹子", i:"🎋"}, {n:"扶桑花", i:"🌺"}, {n:"楓葉", i:"🍁"}, {n:"薰衣草", i:"💐"}, {n:"薄荷", i:"🌿"}, {n:"松樹", i:"🌲"}, {n:"雛菊", i:"🌼"}, {n:"貝殼", i:"🐚"}]
         };
 
-        // 這個表必須跟 HQ_V2 的 missions 設定完全一致，才能正確提示要呼叫誰
         const TARGET_MAPPING = {
             'loc_1': 'B', 'loc_2': 'A', 'loc_3': 'D', 'loc_4': 'C',
             'loc_5': 'C', 'loc_6': 'D', 'loc_7': 'A', 'loc_8': 'B',
@@ -260,9 +263,9 @@
         let activeSessionId = null;
         let currentLocationId = null;
         let currentMissionData = null;
-        let myIdentity = localStorage.getItem('my_squad_identity'); // 讀取儲存的身分
+        let myIdentity = localStorage.getItem('my_squad_identity'); 
 
-        // 安全機制：超時顯示重試
+        // 安全機制
         setTimeout(() => {
             const retryBtn = document.querySelector('.loading-retry');
             if(retryBtn) retryBtn.style.display = 'block';
@@ -285,15 +288,14 @@
                 return; 
             }
 
-            // 2. 如果沒 ID，顯示「請掃描」提示 (這裡簡化，直接跳等待畫面或提示)
+            // 2. 如果沒 ID，顯示提示
             if (!currentLocationId) {
                 hideLoading();
                 alert("請掃描現場 QR Code 以進入任務");
-                // 這裡可以選擇顯示一個簡單的說明頁，或保持空白
                 return;
             }
 
-            // 3. 有身分且有 ID，進入主程式
+            // 3. 正常流程
             document.getElementById('app').classList.remove('hidden');
             document.getElementById('identity-display').innerText = myIdentity + " SQUAD";
             await checkSessionAndLoadMission();
@@ -304,12 +306,12 @@
             if(confirm(`確認您的身分為 ${team} 小隊？\n確認後將無法更改。`)) {
                 localStorage.setItem('my_squad_identity', team);
                 myIdentity = team;
-                location.reload(); // 重新整理以進入流程
+                location.reload(); 
             }
         }
 
         function clearIdentity() {
-            if(confirm("確定要重置身分嗎？")) {
+            if(confirm("⚠ SYSTEM RESET ⚠\n確定要重置身分設定嗎？")) {
                 localStorage.removeItem('my_squad_identity');
                 location.reload();
             }
@@ -358,7 +360,7 @@
             if (error || !data) {
                 console.error("Mission data not found", error);
                 hideLoading();
-                alert("⚠ 無法取得任務資料\n\n可能原因：\n1. HQ 尚未初始化新戰局\n2. 該地點 ID 無效");
+                alert("⚠ 無法取得任務資料");
                 showScreen('screen-wait');
                 return;
             }
