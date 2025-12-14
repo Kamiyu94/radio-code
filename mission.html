@@ -14,6 +14,10 @@
             --cool: #00ffff;
             --panel-bg: #111111;
             --border: #333;
+            --alpha: #CC0000;
+            --bravo: #009900;
+            --charlie: #0033CC;
+            --delta: #CCAA00;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -32,66 +36,79 @@
 
         .hidden { display: none !important; }
         
+        /* 通用螢幕容器 */
         .screen { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: flex-start;
-            padding: 20px; 
-            padding-top: 10vh;
-            width: 100%; 
-            height: 100%; 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            background: #000; 
-            z-index: 1; 
-            overflow-y: auto; 
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            padding: 20px; padding-top: 5vh; width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+            background: #000; z-index: 10; overflow-y: auto;
         }
 
-        /* --- UI Components --- */
-        h1, h2 { text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 20px; }
+        h1, h2 { text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 20px; color: var(--highlight); }
+        h2 { font-size: 1.2rem; margin-bottom: 15px; }
+
+        /* --- 新版首頁：小隊選擇選單 --- */
+        #squad-menu { z-index: 5; justify-content: center; padding-top: 20px; }
+        .menu-btn {
+            width: 100%; max-width: 320px; padding: 25px; margin-bottom: 20px;
+            font-size: 1.5rem; font-weight: 900; border-radius: 12px;
+            background: #111; color: #fff; border: 3px solid #333;
+            text-align: left; position: relative; cursor: pointer; transition: 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .menu-btn:active { transform: scale(0.97); filter: brightness(1.2); }
+        .menu-btn::after { content: '📓'; font-size: 1.8rem; }
+
+        /* --- 新版頁面：密碼本檢視 --- */
+        #codebook-view { z-index: 6; background: #050505; }
+        .book-header { 
+            width: 100%; padding: 15px; text-align: center; font-size: 1.5rem; font-weight: 900; 
+            color: #fff; margin-bottom: 20px; border-radius: 8px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
         
+        /* 密碼本 Grid 排版 */
+        .book-grid {
+            display: grid;
+            grid-template-columns: 1fr auto; /* 左邊物品名稱，右邊密碼 */
+            gap: 10px;
+            width: 100%; max-width: 350px;
+            margin-bottom: 30px;
+        }
+        
+        .book-row {
+            display: contents; /* 讓子元素直接參與 grid */
+            border-bottom: 1px solid #333;
+        }
+
+        .book-item-col {
+            display: flex; align-items: center; padding: 12px;
+            background: rgba(255,255,255,0.05); border-radius: 6px 0 0 6px;
+            font-size: 1.1rem;
+        }
+        .book-icon { font-size: 1.6rem; margin-right: 12px; }
+
+        .book-code-col {
+            display: flex; align-items: center; justify-content: center; padding: 12px;
+            background: rgba(0,0,0,0.3); border: 2px solid var(--highlight); border-radius: 0 6px 6px 0;
+            font-family: 'Consolas', monospace; font-size: 1.4rem; font-weight: 900; color: var(--highlight); letter-spacing: 1px;
+        }
+
+        .back-btn { margin-top: auto; /* 推到底部 */ background: #333; color: #ccc; border: none; }
+
+        /* --- 舊有任務介面元件 --- */
         .input-box {
-            background: #000;
-            border: 2px solid var(--highlight);
-            color: var(--highlight);
-            font-size: 2rem;
-            padding: 15px;
-            width: 100%;
-            max-width: 300px;
-            text-align: center;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            outline: none;
-            font-family: inherit;
-            text-transform: uppercase;
-            user-select: text;
+            background: #000; border: 2px solid var(--highlight); color: var(--highlight);
+            font-size: 2rem; padding: 15px; width: 100%; max-width: 300px; text-align: center;
+            border-radius: 8px; margin-bottom: 20px; outline: none; font-family: inherit; text-transform: uppercase; user-select: text;
         }
-
         .btn {
-            background: var(--panel-bg);
-            border: 1px solid var(--highlight);
-            color: var(--highlight);
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            border-radius: 8px;
-            cursor: pointer;
-            text-transform: uppercase;
-            font-weight: bold;
-            width: 100%;
-            max-width: 300px;
-            margin-bottom: 15px;
-            transition: all 0.2s;
-            flex-shrink: 0; 
+            background: var(--panel-bg); border: 1px solid var(--highlight); color: var(--highlight);
+            padding: 15px 30px; font-size: 1.2rem; border-radius: 8px; cursor: pointer;
+            text-transform: uppercase; font-weight: bold; width: 100%; max-width: 300px; margin-bottom: 15px; transition: all 0.2s; flex-shrink: 0; 
         }
-
         .btn:active { background: var(--highlight); color: #000; transform: scale(0.98); }
         
-        /* --- Specific Screens --- */
-        #screen-pin { z-index: 10; }
-        
+        /* --- 任務狀態畫面 --- */
+        #screen-pin { padding-top: 15vh; }
         .target-icon { font-size: 6rem; margin-bottom: 10px; animation: pulse 2s infinite; }
         @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.05);} 100% {transform: scale(1);} }
         .mission-hint { color: #888; font-size: 0.9rem; text-align: center; margin-bottom: 30px; max-width: 80%; }
@@ -105,19 +122,9 @@
         #screen-success { background: #001a00; z-index: 20; text-align: center; padding-top: 5vh; }
         .success-icon { font-size: 5rem; color: var(--highlight); margin-bottom: 20px; }
         .success-title { color: var(--highlight); font-size: 1.5rem; font-weight: bold; margin-bottom: 20px; }
-        
-        .next-step-box {
-            border: 1px dashed var(--highlight);
-            padding: 15px;
-            border-radius: 8px;
-            background: rgba(0, 255, 65, 0.1);
-            margin-bottom: 10px;
-            width: 100%;
-            max-width: 320px;
-        }
+        .next-step-box { border: 1px dashed var(--highlight); padding: 15px; border-radius: 8px; background: rgba(0, 255, 65, 0.1); margin-bottom: 10px; width: 100%; max-width: 320px; }
         .step-label { color: #888; font-size: 0.8rem; display: block; margin-bottom: 5px; }
         .step-val { color: #fff; font-size: 1.1rem; font-weight: bold; display: block; line-height: 1.4; }
-        
         .comm-val { color: #ffcc00; font-size: 1rem; font-weight: bold; display: block; line-height: 1.4; white-space: pre-line; }
 
         #screen-cooldown { background: #0a0a0a; z-index: 15; border-top: 5px solid var(--cool); justify-content: center; padding-top: 20px; }
@@ -125,17 +132,33 @@
         .cool-msg { color: var(--cool); font-size: 1.2rem; font-weight: bold; text-align: center; margin-bottom: 40px; line-height: 1.5; }
         .reboot-btn { border-color: var(--cool); color: var(--cool); font-size: 1rem; padding: 10px; }
 
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 100;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
     </style>
 </head>
 <body>
 
-    <div id="screen-pin" class="screen">
+    <div id="squad-menu" class="screen">
+        <h1>CODE BOOK ACCESS</h1>
+        <p style="color:#666; margin-bottom:30px;">OFFLINE DATABASE</p>
+        <p style="color:#888; font-size:0.8rem; margin-bottom:20px;">請選擇您所屬的小隊以查看密碼本</p>
+        
+        <div class="menu-btn" style="border-color:var(--alpha); color:var(--alpha);" onclick="showCodeBook('A')">ALPHA SQUAD</div>
+        <div class="menu-btn" style="border-color:var(--bravo); color:var(--bravo);" onclick="showCodeBook('B')">BRAVO SQUAD</div>
+        <div class="menu-btn" style="border-color:var(--charlie); color:var(--charlie);" onclick="showCodeBook('C')">CHARLIE SQUAD</div>
+        <div class="menu-btn" style="border-color:var(--delta); color:var(--delta);" onclick="showCodeBook('D')">DELTA SQUAD</div>
+    </div>
+
+    <div id="codebook-view" class="screen hidden">
+        <div id="book-header" class="book-header">SQUAD BOOK</div>
+        <p style="color:#666; font-size:0.8rem; margin-bottom:20px;">CONFIDENTIAL // EYES ONLY</p>
+        
+        <div id="book-grid-container" class="book-grid"></div>
+
+        <button class="btn back-btn" onclick="showScreen('squad-menu')">← BACK TO MENU</button>
+    </div>
+
+    <div id="screen-pin" class="screen hidden">
         <h2>TERMINAL ACCESS</h2>
         <p style="color:#666; margin-bottom:20px;">SECURITY CLEARANCE REQUIRED</p>
         <input type="number" id="pin-input" class="input-box" placeholder="PIN CODE">
@@ -144,52 +167,36 @@
 
     <div id="screen-mission" class="screen hidden">
         <div style="text-align:right; width:100%; padding:10px; color:#444; font-size:0.8rem;">SECURE CONNECTION</div>
-        
         <div id="target-display" class="target-icon">❓</div>
         <div id="target-name" style="font-size:1.5rem; font-weight:bold; margin-bottom:5px;">TARGET</div>
-        
         <p class="mission-hint">向友軍單位索取解鎖代碼<br>REQUEST CODE FROM ALLY</p>
-        
         <input type="text" id="mission-input" class="input-box" placeholder="CODE" maxlength="10">
         <button class="btn" onclick="verifyCode()">VERIFY CODE</button>
-        
         <div id="attempts-display" class="attempts-left hidden">⚠ 密碼錯誤 (剩餘 2 次機會)</div>
     </div>
 
     <div id="screen-locked" class="screen hidden">
         <div class="lock-icon" onclick="unlockTap()">❌</div>
-        <div class="lock-msg">
-            SYSTEM LOCKED<br>
-            CONNECTION TERMINATED<br><br>
-            PLEASE CONTACT HQ
-        </div>
+        <div class="lock-msg">SYSTEM LOCKED<br>CONNECTION TERMINATED<br><br>PLEASE CONTACT HQ</div>
     </div>
 
     <div id="screen-success" class="screen hidden">
         <div class="success-icon">✅</div>
         <div class="success-title">ACCESS GRANTED</div>
-        
         <div class="next-step-box">
             <span class="step-label">NEXT LOCATION (下一站)</span>
             <span id="success-next-loc" class="step-val">...</span>
         </div>
-        
         <div class="next-step-box">
             <span class="step-label">COMM PROTOCOL (通訊指令)</span>
             <span id="success-comm-msg" class="comm-val">...</span>
         </div>
-        
         <p style="color:#666; font-size:0.8rem; margin-top:20px;">TERMINAL WILL SHUT DOWN</p>
     </div>
 
     <div id="screen-cooldown" class="screen hidden">
         <div class="cool-icon">🔋</div>
-        <div class="cool-msg">
-            TERMINAL DISCHARGED<br>
-            DATA UPLOAD COMPLETE<br><br>
-            請更換裝置進行任務<br>
-            SWITCH TO ANOTHER DEVICE
-        </div>
+        <div class="cool-msg">TERMINAL DISCHARGED<br>DATA UPLOAD COMPLETE<br><br>請更換裝置進行任務<br>SWITCH TO ANOTHER DEVICE</div>
         <button class="btn reboot-btn" onclick="showRebootModal()">SYSTEM REBOOT</button>
     </div>
 
@@ -208,32 +215,25 @@
     </div>
 
     <script>
-        // --- DATA CONFIGURATION ---
+        // --- 1. 離線任務資料 (Offline Data) ---
         const missions = {
             // Phase 1: Fruits
-            'loc_1': { i: '🍌', n: '香蕉', c: 'A3O7', cat: 'fruits', next: '前往 LOC 5', comm: '切換至 [主頻 CH1 / 備頻 CH3]。\n切換後，請呼叫該頻道的友軍單位。' }, 
-            'loc_2': { i: '🍎', n: '蘋果', c: 'X4T9', cat: 'fruits', next: '前往 LOC 7', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
-            'loc_3': { i: '🥝', n: '奇異果', c: 'J6H2', cat: 'fruits', next: '前往 LOC 6', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
-            'loc_4': { i: '🍓', n: '草莓', c: 'V1G5', cat: 'fruits', next: '前往 LOC 8', comm: '切換至 [主頻 CH2 / 備頻 CH4]。\n切換後，請呼叫該頻道的友軍單位。' }, 
+            'loc_1': { i: '🍌', n: '香蕉', c: 'A3O7', cat: 'fruits', next: '前往 LOC 5', comm: '切換至 [主頻 CH1 / 備頻 CH3]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'B' }, 
+            'loc_2': { i: '🍎', n: '蘋果', c: 'X4T9', cat: 'fruits', next: '前往 LOC 7', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。', target_book: 'A' }, 
+            'loc_3': { i: '🥝', n: '奇異果', c: 'J6H2', cat: 'fruits', next: '前往 LOC 6', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。', target_book: 'D' }, 
+            'loc_4': { i: '🍓', n: '草莓', c: 'V1G5', cat: 'fruits', next: '前往 LOC 8', comm: '切換至 [主頻 CH2 / 備頻 CH4]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'C' }, 
             
             // Phase 2: Animals
-            'loc_5': { i: '🐺', n: '狼', c: 'F6B2', cat: 'animals', next: '前往 LOC 9', comm: '切換至 [主頻 CH1 / 備頻 CH3]。\n切換後，請呼叫該頻道的友軍單位。' }, 
-            'loc_6': { i: '🦁', n: '獅子', c: 'C7M1', cat: 'animals', next: '前往 LOC 11', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
-            'loc_7': { i: '🐻', n: '熊', c: 'R3Z5', cat: 'animals', next: '前往 LOC 10', comm: '切換至 [主頻 CH2 / 備頻 CH4]。\n切換後，請呼叫該頻道的友軍單位。' }, 
-            'loc_8': { i: '🐯', n: '老虎', c: 'Y5N8', cat: 'animals', next: '前往 LOC 12', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。' }, 
+            'loc_5': { i: '🐺', n: '狼', c: 'F6B2', cat: 'animals', next: '前往 LOC 9', comm: '切換至 [主頻 CH1 / 備頻 CH3]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'C' }, 
+            'loc_6': { i: '🦁', n: '獅子', c: 'C7M1', cat: 'animals', next: '前往 LOC 11', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。', target_book: 'D' }, 
+            'loc_7': { i: '🐻', n: '熊', c: 'R3Z5', cat: 'animals', next: '前往 LOC 10', comm: '切換至 [主頻 CH2 / 備頻 CH4]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'A' }, 
+            'loc_8': { i: '🐯', n: '老虎', c: 'Y5N8', cat: 'animals', next: '前往 LOC 12', comm: '保持當前頻道。\n請靜候友軍單位與你們聯繫。', target_book: 'B' }, 
 
-            // Phase 3: Plants (ALL LOC NOW)
-            // loc_9 (原 hq_a) for Team A
-            'loc_9': { i: '🍀', n: '幸運草', c: 'N9T4', cat: 'plants', next: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
-            
-            // loc_10 (原 hq_c) for Team C? No wait, Team B goes 2->7->10 based on logic
-            'loc_10': { i: '🌵', n: '仙人掌', c: 'H5I0', cat: 'plants', next: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
-            
-            // loc_11 (原 hq_b) for Team C (3->6->11)
-            'loc_11': { i: '🌴', n: '椰子樹', c: 'C5Y9', cat: 'plants', next: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }, 
-            
-            // loc_12 (原 hq_d) for Team D
-            'loc_12': { i: '🌲', n: '松樹', c: 'J3R6', cat: 'plants', next: 'MISSION ACCOMPLISHED', comm: '切換至 [救援頻道]。\n\n1. 請立即清點小組人數及裝備。\n2. 使用無線電向 HQ 回報：\n   任務代號『拓撲重構』已完成。\n3. 原地待命，等待 HQ 下一步指示。' }    
+            // Phase 3: Plants
+            'loc_9': { i: '🍀', n: '幸運草', c: 'N9T4', cat: 'plants', next: 'MISSION COMPLETE', comm: '切換至 [救援頻道] 回報 HQ。', target_book: 'B' }, 
+            'loc_10': { i: '🌵', n: '仙人掌', c: 'H5I0', cat: 'plants', next: 'MISSION COMPLETE', comm: '切換至 [救援頻道] 回報 HQ。', target_book: 'A' }, 
+            'loc_11': { i: '🌴', n: '椰子樹', c: 'C5Y9', cat: 'plants', next: 'MISSION COMPLETE', comm: '切換至 [救援頻道] 回報 HQ。', target_book: 'D' }, 
+            'loc_12': { i: '🌲', n: '松樹', c: 'J3R6', cat: 'plants', next: 'MISSION COMPLETE', comm: '切換至 [救援頻道] 回報 HQ。', target_book: 'C' }    
         };
 
         const rescueCodes = {
@@ -242,7 +242,10 @@
             'plants':  ['9001', '9002', '9003', '9004', '9005']
         };
 
-        // --- STATE MANAGEMENT ---
+        const teamColors = { 'A': 'var(--alpha)', 'B': 'var(--bravo)', 'C': 'var(--charlie)', 'D': 'var(--delta)' };
+        const teamNames = { 'A': 'ALPHA SQUAD', 'B': 'BRAVO SQUAD', 'C': 'CHARLIE SQUAD', 'D': 'DELTA SQUAD' };
+
+        // --- 2. STATE MANAGEMENT ---
         const urlParams = new URLSearchParams(window.location.search);
         const missionId = urlParams.get('id');
         let missionData = null;
@@ -251,46 +254,30 @@
         let wrongAttempts = parseInt(localStorage.getItem(`attempts_${missionId}`)) || 0;
         let usedRescueCodes = JSON.parse(localStorage.getItem('used_rescue')) || [];
 
-        // --- INITIALIZATION (修正版：加入選單 + 排序 LOC 1-12) ---
-        window.onload = function() {
-            // 如果網址沒有 ID，或者 ID 不在名單內
-            if (!missionId || !missions[missionId]) {
-                
-                // 產生選單 HTML (1-12)
-                const orderedKeys = [
-                    'loc_1','loc_2','loc_3','loc_4',
-                    'loc_5','loc_6','loc_7','loc_8',
-                    'loc_9','loc_10','loc_11','loc_12'
-                ];
+        // --- 3. HELPER FUNCTION: 整理離線密碼本 ---
+        // 這個函式會把上面的 missions 資料，自動整理成四本密碼書
+        function organizeOfflineBooks() {
+            const books = { A: [], B: [], C: [], D: [] };
+            Object.values(missions).forEach(m => {
+                if (books[m.target_book]) {
+                    books[m.target_book].push({ icon: m.i, name: m.n, code: m.c });
+                }
+            });
+            // 這裡可以選擇要不要排序，目前先不排序，維持 Phase 1,2,3 的順序
+            return books;
+        }
+        const offlineBooks = organizeOfflineBooks();
 
-                let menuHtml = `
-                    <div style="padding:20px; height:100vh; overflow-y:auto; display:flex; flex-direction:column; align-items:center;">
-                        <h1 style="color:var(--highlight); margin-bottom:10px;">TERMINAL SELECT</h1>
-                        <p style="color:#666; margin-bottom:20px;">OFFLINE MODE</p>
-                        <div style="width:100%; max-width:320px;">
-                `;
-                
-                orderedKeys.forEach(key => {
-                    const m = missions[key];
-                    if(m) {
-                        menuHtml += `
-                            <button class="btn" style="margin-bottom:10px; text-align:left; padding:15px; display:flex; align-items:center;" onclick="window.location.search='?id=${key}'">
-                                <span style="font-size:1.5rem; margin-right:15px; width:40px; text-align:center;">${m.i}</span>
-                                <div>
-                                    <div style="font-size:1rem; font-weight:bold;">${m.n}</div>
-                                    <div style="font-size:0.7rem; opacity:0.6;">ID: ${key.toUpperCase()}</div>
-                                </div>
-                            </button>
-                        `;
-                    }
-                });
-                
-                menuHtml += '</div></div>';
-                document.body.innerHTML = menuHtml;
+
+        // --- 4. INITIALIZATION (主要邏輯修改) ---
+        window.onload = function() {
+            // 如果網址沒有帶 ID，顯示小隊選擇選單
+            if (!missionId || !missions[missionId]) {
+                showScreen('squad-menu');
                 return;
             }
 
-            // 以下為原本的正常邏輯
+            // 如果有帶 ID，執行原本的任務流程
             missionData = missions[missionId];
 
             if (globalStatus === 'LOCKED') {
@@ -302,12 +289,56 @@
             }
         };
 
-        // --- LOGIC FUNCTIONS ---
+        // --- 5. UI FUNCTIONS (新功能) ---
 
+        // 顯示切換螢幕的通用函式
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
+            window.scrollTo(0, 0); // 切換畫面時捲回頂部
         }
+
+        // 顯示特定小隊的密碼本
+        function showCodeBook(teamId) {
+            const bookData = offlineBooks[teamId];
+            const color = teamColors[teamId];
+            const name = teamNames[teamId];
+            const container = document.getElementById('book-grid-container');
+            const header = document.getElementById('book-header');
+
+            // 設定標題樣式
+            header.innerText = name + " CODE BOOK";
+            header.style.backgroundColor = color;
+
+            // 清空並產生表格內容
+            container.innerHTML = '';
+            if (bookData.length === 0) {
+                container.innerHTML = '<p style="color:#666; grid-column: 1/-1; text-align:center;">NO DATA</p>';
+            } else {
+                bookData.forEach(item => {
+                    // 左側：圖示 + 名稱
+                    const itemCol = document.createElement('div');
+                    itemCol.className = 'book-item-col';
+                    itemCol.innerHTML = `<span class="book-icon">${item.icon}</span><span>${item.name}</span>`;
+                    
+                    // 右側：密碼
+                    const codeCol = document.createElement('div');
+                    codeCol.className = 'book-code-col';
+                    codeCol.innerText = item.code;
+                    // 讓密碼框的顏色跟隨小隊顏色
+                    codeCol.style.borderColor = color;
+                    codeCol.style.color = color;
+
+                    container.appendChild(itemCol);
+                    container.appendChild(codeCol);
+                });
+            }
+
+            showScreen('codebook-view');
+        }
+
+
+        // --- 6. EXISTING MISSION LOGIC (舊有功能保持不變) ---
 
         function checkPin() {
             const pin = document.getElementById('pin-input').value;
