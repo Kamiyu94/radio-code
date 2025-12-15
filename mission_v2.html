@@ -12,201 +12,175 @@
             --highlight: #00ff41; 
             --danger: #ff3333;
             --panel-bg: #111111;
-            
             /* 小隊代表色 */
-            --alpha: #ff3333;
-            --bravo: #33cc33;
-            --charlie: #3388ff;
-            --delta: #ffff33;
+            --alpha: #ff3333; --bravo: #33cc33; --charlie: #3388ff; --delta: #ffff33;
         }
-
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
-        
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'Consolas', 'Monaco', monospace;
-            margin: 0;
-            height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Consolas', 'Monaco', monospace; margin: 0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
         .hidden { display: none !important; }
 
-        /* --- 1. 身分選擇畫面 --- */
-        #identity-screen {
-            height: 100%; width: 100%;
-            display: flex; flex-direction: column;
-            padding: 20px; overflow-y: auto; align-items: center; justify-content: center;
-            background: #050505; z-index: 300;
-        }
-        
-        .id-title { font-size: 1.5rem; color: #fff; margin-bottom: 10px; font-weight: bold; letter-spacing: 2px; }
-        .id-sub { font-size: 0.9rem; color: #666; margin-bottom: 30px; text-align: center; max-width: 300px;}
-        
-        .team-select-btn {
-            width: 100%; max-width: 300px; padding: 20px; margin-bottom: 15px;
-            font-size: 1.2rem; font-weight: 900; border-radius: 8px;
-            background: #111; color: #fff; border: 2px solid #444;
-            text-align: center; cursor: pointer; transition: 0.2s;
-        }
-        .team-select-btn:active { transform: scale(0.98); filter: brightness(1.2); }
-
-        /* --- 2. 密碼本檢視 (Overlay) --- */
-        #codebook-overlay {
+        /* 通用覆蓋層 */
+        .overlay-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #050505; z-index: 200; overflow-y: auto; padding: 20px; padding-bottom: 80px;
             display: flex; flex-direction: column; align-items: center;
         }
-        
-        .book-header { 
-            width: 100%; padding: 15px; text-align: center; font-size: 1.5rem; font-weight: 900; 
-            color: #fff; margin-bottom: 10px; border-radius: 8px; position: sticky; top: 0; z-index: 10;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-
-        .book-category-title {
-            width: 100%; max-width: 350px;
-            color: #666; font-size: 0.8rem; margin-top: 20px; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 2px;
-        }
-
-        .book-grid {
-            display: grid; grid-template-columns: 1fr auto; gap: 8px;
-            width: 100%; max-width: 350px; margin-bottom: 10px;
-        }
-        
-        .book-item-col {
-            display: flex; align-items: center; padding: 10px;
-            background: rgba(255,255,255,0.05); border-radius: 6px 0 0 6px; font-size: 1rem;
-        }
-        .book-icon { font-size: 1.5rem; margin-right: 12px; }
-
-        .book-code-col {
-            display: flex; align-items: center; justify-content: center; padding: 10px; min-width: 100px;
-            background: rgba(0,0,0,0.3); border: 1px solid var(--highlight); border-radius: 0 6px 6px 0;
-            font-family: 'Consolas', monospace; font-size: 1.2rem; font-weight: 900; color: var(--highlight); letter-spacing: 1px;
-        }
-
-        .close-book-btn {
+        .close-btn-fixed {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: #333; color: #fff; border: 1px solid #666; padding: 10px 30px; border-radius: 20px;
-            font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 210;
+            background: #333; color: #fff; border: 1px solid #666; padding: 12px 30px; border-radius: 30px;
+            font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 210; cursor: pointer;
         }
 
-        /* --- 3. 任務主介面 --- */
-        #app { height: 100%; width: 100%; position: relative; }
+        /* 1. 身分選擇 */
+        #identity-screen { z-index: 300; justify-content: center; }
+        .team-select-btn { width: 100%; max-width: 300px; padding: 20px; margin-bottom: 15px; font-size: 1.2rem; font-weight: 900; border-radius: 8px; background: #111; color: #fff; border: 2px solid #444; text-align: center; cursor: pointer; }
 
-        .screen { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-            padding: 20px; padding-top: 5vh; padding-bottom: 60px;
-            background: #000; z-index: 10;
-            overflow-y: auto; 
-        }
-
-        .input-box {
-            background: #000; border: 2px solid var(--highlight); color: var(--highlight);
-            font-size: 2rem; padding: 15px; width: 100%; max-width: 300px;
-            text-align: center; border-radius: 8px; margin-bottom: 20px; outline: none;
-            font-family: inherit; text-transform: uppercase;
-        }
-
-        .btn {
-            background: #222; border: 1px solid var(--highlight); color: var(--highlight);
-            padding: 15px 30px; font-size: 1.2rem; border-radius: 8px; cursor: pointer;
-            width: 100%; max-width: 300px; font-weight: bold;
-        }
-        .btn:active { background: var(--highlight); color: #000; }
-
-        /* 呼叫提示區塊 */
-        .call-card {
-            border: 2px dashed #444; border-radius: 12px; padding: 20px; width: 100%; max-width: 320px;
-            text-align: center; margin-bottom: 30px; background: rgba(255,255,255,0.05);
-        }
-        .call-label { color: #888; font-size: 0.9rem; display: block; margin-bottom: 10px; }
-        .call-target { font-size: 1.8rem; font-weight: 900; display: block; letter-spacing: 1px; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
-
-        .my-book-btn {
-            margin-top: 20px; margin-bottom: 30px; 
-            background: #111; color: #fff; border: 1px solid #666;
-            padding: 15px; width: 100%; max-width: 300px; font-size: 1rem; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 8px;
-        }
+        /* 2. 儀表板 (方案 B) */
+        #dashboard-screen { z-index: 100; padding-top: 40px; }
+        .db-header { text-align: center; margin-bottom: 30px; }
+        .db-title { color: var(--highlight); font-size: 1.8rem; letter-spacing: 2px; margin: 0; }
+        .db-sub { color: #666; font-size: 0.8rem; }
+        .db-status { margin-top: 10px; color: #888; font-size: 0.9rem; border: 1px solid #333; padding: 5px 15px; border-radius: 20px; display: inline-block; }
         
-        .identity-badge {
-            position: absolute; top: 10px; left: 10px; 
-            font-size: 0.7rem; color: #666; border: 1px solid #333; padding: 2px 6px; border-radius: 4px;
+        .db-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 350px; margin-bottom: 30px; }
+        .db-btn {
+            background: #111; border: 1px solid #444; color: #fff; border-radius: 12px;
+            padding: 20px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s;
+        }
+        .db-btn:active { background: #222; transform: scale(0.98); }
+        .db-btn-icon { font-size: 2rem; margin-bottom: 10px; }
+        .db-btn-label { font-size: 0.9rem; font-weight: bold; }
+        
+        .scan-btn {
+            background: var(--highlight); color: #000; border: none; padding: 15px; width: 100%; max-width: 350px;
+            font-size: 1.2rem; font-weight: 900; border-radius: 12px; cursor: pointer; margin-top: auto; margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3); display: flex; align-items: center; justify-content: center; gap: 10px;
         }
 
-        /* 狀態畫面 */
-        .status-icon { font-size: 5rem; margin-bottom: 20px; }
-        .info-text { font-size: 1.2rem; color: #fff; margin-bottom: 10px; font-weight: bold; }
-        .comm-msg { color: #ffcc00; white-space: pre-line; text-align: center; margin-top: 20px; border: 1px dashed #444; padding: 15px; width: 100%; }
+        /* 3. 密碼本 & NATO & Comms 樣式 */
+        .book-header { width: 100%; padding: 15px; text-align: center; font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 10px; border-radius: 8px; position: sticky; top: 0; z-index: 10; background: #111; border-bottom: 2px solid #333; }
+        .book-grid-list { display: grid; grid-template-columns: 1fr auto; gap: 8px; width: 100%; max-width: 350px; margin-bottom: 10px; }
+        .book-item-col { display: flex; align-items: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px 0 0 6px; font-size: 1rem; }
+        .book-code-col { display: flex; align-items: center; justify-content: center; padding: 10px; min-width: 100px; background: rgba(0,0,0,0.3); border: 1px solid #666; border-radius: 0 6px 6px 0; font-family: monospace; font-size: 1.2rem; font-weight: 900; color: #fff; }
+        
+        .nato-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333; width: 100%; max-width: 350px; }
+        .nato-char { font-weight: 900; color: var(--highlight); font-size: 1.2rem; width: 40px; }
+        .nato-word { color: #fff; font-size: 1.1rem; }
 
-        #loading {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 99;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--highlight);
-        }
-        .loading-retry { margin-top: 20px; color: #fff; border: 1px solid #666; padding: 5px 15px; font-size: 0.8rem; cursor: pointer; display: none;}
+        .comm-info-box { width: 100%; max-width: 350px; background: #111; border: 1px solid #444; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .comm-label { color: #888; font-size: 0.8rem; margin-bottom: 5px; display: block; }
+        .comm-val { color: #fff; font-size: 1.2rem; font-weight: bold; letter-spacing: 1px; }
 
-        /* ★ 全域懸浮重置按鈕 ★ */
-        .floating-reset-btn {
-            position: fixed; bottom: 15px; right: 15px;
-            background: rgba(0,0,0,0.8); border: 1px solid #666; color: #666;
-            padding: 8px 15px; border-radius: 20px; font-size: 0.75rem;
-            z-index: 500; cursor: pointer; backdrop-filter: blur(5px);
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
-        .floating-reset-btn:hover { border-color: var(--danger); color: var(--danger); }
-
-        /* ★ 管理員密碼 Modal ★ */
-        #admin-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 600;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
+        /* 4. 任務介面 */
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 20px; padding-top: 5vh; padding-bottom: 60px; background: #000; z-index: 10; overflow-y: auto; }
+        .input-box { background: #000; border: 2px solid var(--highlight); color: var(--highlight); font-size: 2rem; padding: 15px; width: 100%; max-width: 300px; text-align: center; border-radius: 8px; margin-bottom: 20px; outline: none; text-transform: uppercase; }
+        .btn { background: #222; border: 1px solid var(--highlight); color: var(--highlight); padding: 15px 30px; font-size: 1.2rem; border-radius: 8px; cursor: pointer; width: 100%; max-width: 300px; font-weight: bold; }
+        .call-card { border: 2px dashed #444; border-radius: 12px; padding: 20px; width: 100%; max-width: 320px; text-align: center; margin-bottom: 30px; background: rgba(255,255,255,0.05); }
+        .floating-reset-btn { position: fixed; bottom: 15px; right: 15px; background: rgba(0,0,0,0.8); border: 1px solid #666; color: #666; padding: 8px 15px; border-radius: 20px; font-size: 0.75rem; z-index: 500; cursor: pointer; backdrop-filter: blur(5px); }
+        
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 99; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--highlight); }
+        #admin-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-    <div id="loading">
-        <div id="loading-text">CONNECTING TO SATELLITE...</div>
-        <div class="loading-retry" onclick="location.reload()">RETRY CONNECTION</div>
-    </div>
+    <div id="loading"><div id="loading-text">CONNECTING...</div></div>
 
     <div class="floating-reset-btn" onclick="openAdminModal()">⚠ 重置 / RESET</div>
 
     <div id="admin-modal" class="hidden">
         <h2 style="color:var(--danger);">ADMIN OVERRIDE</h2>
-        <p style="color:#888; margin-bottom:20px;">請輸入 HQ 授權碼以重置身分</p>
-        <input type="number" id="admin-pin" class="input-box" placeholder="PIN" style="border-color:var(--danger); color:var(--danger);">
+        <input type="number" id="admin-pin" class="input-box" placeholder="PIN: 8888" style="border-color:var(--danger); color:var(--danger);">
         <button class="btn" style="border-color:var(--danger); color:var(--danger);" onclick="confirmReset()">CONFIRM RESET</button>
-        <button class="btn" style="border-color:#666; color:#666;" onclick="closeAdminModal()">CANCEL</button>
+        <button class="btn" style="border-color:#666; color:#666;" onclick="document.getElementById('admin-modal').classList.add('hidden')">CANCEL</button>
     </div>
 
-    <div id="identity-screen" class="hidden">
-        <div class="id-title">IDENTITY CHECK</div>
-        <div class="id-sub">請選擇您所屬的小隊<br>(綁定後無法更改)</div>
-        
-        <div class="team-select-btn" style="border-color:var(--alpha); color:var(--alpha);" onclick="setIdentity('A')">🔴 ALPHA SQUAD</div>
-        <div class="team-select-btn" style="border-color:var(--bravo); color:var(--bravo);" onclick="setIdentity('B')">🟢 BRAVO SQUAD</div>
-        <div class="team-select-btn" style="border-color:var(--charlie); color:var(--charlie);" onclick="setIdentity('C')">🔵 CHARLIE SQUAD</div>
-        <div class="team-select-btn" style="border-color:var(--delta); color:var(--delta);" onclick="setIdentity('D')">🟡 DELTA SQUAD</div>
+    <div id="identity-screen" class="overlay-screen hidden">
+        <h1 style="color:#fff; margin-bottom:10px;">IDENTITY CHECK</h1>
+        <p style="color:#666; margin-bottom:30px;">SELECT YOUR SQUAD</p>
+        <div class="team-select-btn" style="border-color:var(--alpha); color:var(--alpha);" onclick="setIdentity('A')">🔴 ALPHA</div>
+        <div class="team-select-btn" style="border-color:var(--bravo); color:var(--bravo);" onclick="setIdentity('B')">🟢 BRAVO</div>
+        <div class="team-select-btn" style="border-color:var(--charlie); color:var(--charlie);" onclick="setIdentity('C')">🔵 CHARLIE</div>
+        <div class="team-select-btn" style="border-color:var(--delta); color:var(--delta);" onclick="setIdentity('D')">🟡 DELTA</div>
     </div>
 
-    <div id="codebook-overlay" class="hidden">
+    <div id="dashboard-screen" class="overlay-screen hidden">
+        <div class="db-header">
+            <h1 class="db-title">FIELD LINK V2</h1>
+            <div class="db-sub">TACTICAL TERMINAL</div>
+            <div id="status-badge" class="db-status">ONLINE</div>
+        </div>
+
+        <div class="db-grid">
+            <div class="db-btn" onclick="openMyBook()">
+                <div class="db-btn-icon">📖</div>
+                <div class="db-btn-label">CODE BOOK</div>
+            </div>
+            <div class="db-btn" onclick="openCommsInfo()">
+                <div class="db-btn-icon">📡</div>
+                <div class="db-btn-label">COMMS INFO</div>
+            </div>
+            <div class="db-btn" style="grid-column: 1/-1;" onclick="openNATO()">
+                <div class="db-btn-icon">🔤</div>
+                <div class="db-btn-label">NATO PHONETIC ALPHABET</div>
+            </div>
+        </div>
+
+        <button class="scan-btn" onclick="alert('請使用相機掃描現場 QR Code')">
+            <span>📷</span> 掃描 QR Code 進入任務
+        </button>
+    </div>
+
+    <div id="codebook-overlay" class="overlay-screen hidden">
         <div id="book-header" class="book-header">MY BOOK</div>
         <div id="book-content" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
-        <button class="close-book-btn" onclick="closeCodeBook()">CLOSE BOOK</button>
+        <button class="close-btn-fixed" onclick="document.getElementById('codebook-overlay').classList.add('hidden')">CLOSE</button>
+    </div>
+
+    <div id="nato-overlay" class="overlay-screen hidden">
+        <div class="book-header">NATO ALPHABET</div>
+        <div id="nato-list" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
+        <button class="close-btn-fixed" onclick="document.getElementById('nato-overlay').classList.add('hidden')">CLOSE</button>
+    </div>
+
+    <div id="comms-overlay" class="overlay-screen hidden">
+        <div class="book-header">COMMS DATA</div>
+        <div style="width:100%; max-width:350px; text-align:center; color:#666; margin-bottom:15px;">SYNC FROM HQ</div>
+        
+        <div class="comm-info-box">
+            <span class="comm-label">MAIN CH 1 (主頻 1)</span>
+            <span id="disp-m1" class="comm-val">Loading...</span>
+        </div>
+        <div class="comm-info-box">
+            <span class="comm-label">MAIN CH 2 (主頻 2)</span>
+            <span id="disp-m2" class="comm-val">Loading...</span>
+        </div>
+        <div class="comm-info-box">
+            <span class="comm-label">SUB CH 1 (副頻 1)</span>
+            <span id="disp-s1" class="comm-val" style="color:#aaa;">Loading...</span>
+        </div>
+        <div class="comm-info-box">
+            <span class="comm-label">SUB CH 2 (副頻 2)</span>
+            <span id="disp-s2" class="comm-val" style="color:#aaa;">Loading...</span>
+        </div>
+        
+        <div class="comm-info-box" style="border-color:var(--highlight);">
+            <span class="comm-label">CHALLENGE (口令)</span>
+            <div style="display:flex; justify-content:space-between; margin-top:5px;">
+                <span style="color:#888;">Q:</span> <span id="disp-q" style="color:#fff; font-weight:bold;">...</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:5px;">
+                <span style="color:#888;">A:</span> <span id="disp-a" style="color:var(--highlight); font-weight:bold;">...</span>
+            </div>
+        </div>
+
+        <button class="close-btn-fixed" onclick="document.getElementById('comms-overlay').classList.add('hidden')">CLOSE</button>
     </div>
 
     <div id="app" class="hidden">
         <div id="screen-input" class="screen">
-            <div class="identity-badge" id="identity-display">UNKOWN</div>
-            <div style="font-size:0.8rem; color:#666; width:100%; text-align:right; margin-bottom:10px;">ONLINE: <span id="session-id-disp">...</span></div>
+            <div class="identity-badge" id="identity-display" style="position:absolute; top:10px; left:10px; border:1px solid #444; padding:2px 5px; color:#666; border-radius:4px; font-size:0.7rem;">UNKOWN</div>
             
             <div class="status-icon" id="target-icon" style="font-size:4rem; margin-bottom:10px;">❓</div>
             <div class="info-text" id="target-name" style="margin-bottom:30px;">Loading...</div>
@@ -221,7 +195,7 @@
             <button class="btn" onclick="submitCode()">VERIFY</button>
             <div id="error-msg" style="color:red; margin-top:10px; display:none;">ACCESS DENIED</div>
 
-            <button class="my-book-btn" onclick="openMyBook()"><span>📖 開啟我的密碼本</span></button>
+            <button class="btn" style="margin-top:20px; background:#111; border:1px solid #666; color:#ccc;" onclick="openMyBook()">📖 開啟我的密碼本</button>
         </div>
 
         <div id="screen-success" class="screen hidden" style="background:#001a00;">
@@ -233,327 +207,193 @@
             </div>
             <div class="comm-msg" id="comm-msg">...</div>
         </div>
-
+        
         <div id="screen-wait" class="screen hidden">
-            <div class="status-icon">⏳</div>
-            <div class="info-text">SYSTEM STANDBY</div>
-            <p style="color:#666; text-align:center;">WAITING FOR HQ SIGNAL</p>
-            <button class="btn" style="margin-top:20px;" onclick="location.reload()">RECONNECT</button>
+            <div class="status-icon">⏳</div><div class="info-text">SYSTEM STANDBY</div>
+            <p style="color:#666;">WAITING FOR HQ SIGNAL</p>
         </div>
     </div>
 
     <script>
-        // --- 1. CONFIGURATION ---
         const SUPABASE_URL = 'https://lqhgpeuoejdyodanvauv.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxaGdwZXVvZWpkeW9kYW52YXV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDUyMzAsImV4cCI6MjA3OTA4MTIzMH0.my3U8mN06xm79ArFamTpWydf7rYFXOKT5-ooKmqb_O4';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
-        // ★ HQ 授權碼設定 ★
         const ADMIN_PIN = "8888"; 
 
-        // --- 2. 靜態資料 ---
-        const TEAM_INFO = {
-            'A': { name: 'ALPHA SQUAD', color: 'var(--alpha)', display: '🔴 ALPHA' },
-            'B': { name: 'BRAVO SQUAD', color: 'var(--bravo)', display: '🟢 BRAVO' },
-            'C': { name: 'CHARLIE SQUAD', color: 'var(--charlie)', display: '🔵 CHARLIE' },
-            'D': { name: 'DELTA SQUAD', color: 'var(--delta)', display: '🟡 DELTA' }
-        };
+        const TEAM_INFO = { 'A': { name: 'ALPHA', color: 'var(--alpha)' }, 'B': { name: 'BRAVO', color: 'var(--bravo)' }, 'C': { name: 'CHARLIE', color: 'var(--charlie)' }, 'D': { name: 'DELTA', color: 'var(--delta)' } };
+        const SEEDS = { A: ["L2Z5","P8K3","S4M1","T4W7","X4T9","Q4Y9","B1D6","K7X1","V2C5","O6A4","U9E2","Z3N7","C7M1","D5S2","X2U5","R9S6","N3Y0","G6P9","G2V4","B8H7","L6P2","F5G8","Z7D5","K3I6","E2A4","J3R6","C6U3","P8M5"], B: ["L3T6","D8M3","Z8A4","W5Y3","C5K1","B2H9","I1R8","J9S0","D1E5","B6C9","G7Q5","U6Q4","P5Q9","B2C8","H9I2","D7E1","W6X3","U4V0","F3G8","H5I0","U7V1","L6N3","Z7D5","Z5A3","B9C4","O8P2","W2Y6","D1E8"], C: ["G5H0","K1L9","M6N4","C9D1","Q0R2","A4B7","E2F6","U7V9","I8J3","W2X5","V1G5","O3P7","C2D8","L0M9","N4O6","T5U0","V9W3","D0E5","L2M7","J6K8","A3B6","H1I5","D0E4","V1W6","A9B3","F9G2","X7Z2","C0D5"], D: ["G6I4","L1M7","W7Z1","P9R3","C8D0","Q4Y9","C2D6","K7X1","U0V6","E8F3","N5O2","S4T8","C9E4","U8V3","M4N9","W5X0","S1T7","C6D2","O3P5","Q8R1","S2T6","F5G8","U7V4","Z9A3","D1E6","L4M9","B8C2","F5G0"] };
+        const MASTER_ASSETS = { fruits: [{n:"葡萄", i:"🍇"}, {n:"西瓜", i:"🍉"}, {n:"橘子", i:"🍊"}, {n:"檸檬", i:"🍋"}, {n:"蘋果", i:"🍎"}, {n:"梨子", i:"🍐"}, {n:"椰子", i:"🥥"}, {n:"芒果", i:"🥭"}, {n:"哈密瓜", i:"🍈"}, {n:"番茄", i:"🍅"}, {n:"草莓", i:"🍓"}, {n:"鳳梨", i:"🍍"}], animals: [{n:"獅子", i:"🦁"}, {n:"老鷹", i:"🦅"}, {n:"鱷魚", i:"🐊"}, {n:"貓頭鷹", i:"🦉"}, {n:"長頸鹿", i:"🦒"}, {n:"袋鼠", i:"🦘"}], plants: [{n:"向日葵", i:"🌻"}, {n:"仙人掌", i:"🌵"}, {n:"竹子", i:"🎋"}, {n:"扶桑花", i:"🌺"}, {n:"楓葉", i:"🍁"}, {n:"薰衣草", i:"💐"}, {n:"薄荷", i:"🌿"}, {n:"松樹", i:"🌲"}, {n:"雛菊", i:"🌼"}, {n:"貝殼", i:"🐚"}] };
+        const TARGET_MAPPING = { 'loc_1': 'B', 'loc_2': 'A', 'loc_3': 'D', 'loc_4': 'C', 'loc_5': 'C', 'loc_6': 'D', 'loc_7': 'A', 'loc_8': 'B', 'loc_9': 'B', 'loc_10': 'A', 'loc_11': 'D', 'loc_12': 'C' };
+        const NATO = [["A","Alpha"],["B","Bravo"],["C","Charlie"],["D","Delta"],["E","Echo"],["F","Foxtrot"],["G","Golf"],["H","Hotel"],["I","India"],["J","Juliet"],["K","Kilo"],["L","Lima"],["M","Mike"],["N","November"],["O","Oscar"],["P","Papa"],["Q","Quebec"],["R","Romeo"],["S","Sierra"],["T","Tango"],["U","Uniform"],["V","Victor"],["W","Whiskey"],["X","X-ray"],["Y","Yankee"],["Z","Zulu"]];
 
-        const SEEDS = {
-            A: ["L2Z5", "P8K3", "S4M1", "T4W7", "X4T9", "Q4Y9", "B1D6", "K7X1", "V2C5", "O6A4", "U9E2", "Z3N7", "C7M1", "D5S2", "X2U5", "R9S6", "N3Y0", "G6P9", "G2V4", "B8H7", "L6P2", "F5G8", "Z7D5", "K3I6", "E2A4", "J3R6", "C6U3", "P8M5"],
-            B: ["L3T6", "D8M3", "Z8A4", "W5Y3", "C5K1", "B2H9", "I1R8", "J9S0", "D1E5", "B6C9", "G7Q5", "U6Q4", "P5Q9", "B2C8", "H9I2", "D7E1", "W6X3", "U4V0", "F3G8", "H5I0", "U7V1", "L6N3", "Z7D5", "Z5A3", "B9C4", "O8P2", "W2Y6", "D1E8"],
-            C: ["G5H0", "K1L9", "M6N4", "C9D1", "Q0R2", "A4B7", "E2F6", "U7V9", "I8J3", "W2X5", "V1G5", "O3P7", "C2D8", "L0M9", "N4O6", "T5U0", "V9W3", "D0E5", "L2M7", "J6K8", "A3B6", "H1I5", "D0E4", "V1W6", "A9B3", "F9G2", "X7Z2", "C0D5"],
-            D: ["G6I4", "L1M7", "W7Z1", "P9R3", "C8D0", "Q4Y9", "C2D6", "K7X1", "U0V6", "E8F3", "N5O2", "S4T8", "C9E4", "U8V3", "M4N9", "W5X0", "S1T7", "C6D2", "O3P5", "Q8R1", "S2T6", "F5G8", "U7V4", "Z9A3", "D1E6", "L4M9", "B8C2", "F5G0"]
-        };
+        let activeSessionId = null, currentLocationId = null, currentMissionData = null, myIdentity = localStorage.getItem('my_squad_identity'); 
+        let commsData = null; // 存通訊資料
 
-        const MASTER_ASSETS = {
-            fruits: [{n:"葡萄", i:"🍇"}, {n:"西瓜", i:"🍉"}, {n:"橘子", i:"🍊"}, {n:"檸檬", i:"🍋"}, {n:"蘋果", i:"🍎"}, {n:"梨子", i:"🍐"}, {n:"椰子", i:"🥥"}, {n:"芒果", i:"🥭"}, {n:"哈密瓜", i:"🍈"}, {n:"番茄", i:"🍅"}, {n:"草莓", i:"🍓"}, {n:"鳳梨", i:"🍍"}],
-            animals: [{n:"獅子", i:"🦁"}, {n:"老鷹", i:"🦅"}, {n:"鱷魚", i:"🐊"}, {n:"貓頭鷹", i:"🦉"}, {n:"長頸鹿", i:"🦒"}, {n:"袋鼠", i:"🦘"}],
-            plants: [{n:"向日葵", i:"🌻"}, {n:"仙人掌", i:"🌵"}, {n:"竹子", i:"🎋"}, {n:"扶桑花", i:"🌺"}, {n:"楓葉", i:"🍁"}, {n:"薰衣草", i:"💐"}, {n:"薄荷", i:"🌿"}, {n:"松樹", i:"🌲"}, {n:"雛菊", i:"🌼"}, {n:"貝殼", i:"🐚"}]
-        };
-
-        const TARGET_MAPPING = {
-            'loc_1': 'B', 'loc_2': 'A', 'loc_3': 'D', 'loc_4': 'C',
-            'loc_5': 'C', 'loc_6': 'D', 'loc_7': 'A', 'loc_8': 'B',
-            'loc_9': 'B', 'loc_10': 'A', 'loc_11': 'D', 'loc_12': 'C'
-        };
-
-        // --- 3. STATE MANAGEMENT ---
-        let activeSessionId = null;
-        let currentLocationId = null;
-        let currentMissionData = null;
-        let myIdentity = localStorage.getItem('my_squad_identity'); 
-
-        // 安全機制
-        setTimeout(() => {
-            const retryBtn = document.querySelector('.loading-retry');
-            if(retryBtn) retryBtn.style.display = 'block';
-        }, 5000);
-
-        function hideLoading() {
-            const el = document.getElementById('loading');
-            if (el) el.style.display = 'none';
-        }
-
-        // --- 4. INITIALIZATION ---
         window.onload = async () => {
+            await checkHeartbeat(true); // 強制同步
             const urlParams = new URLSearchParams(window.location.search);
             currentLocationId = urlParams.get('id');
 
-            // 1. 初始化檢查：強制同步新戰局
-            // 這一步非常重要，確保在載入任何東西之前，先確認戰局是否已過期
-            await checkHeartbeat(true);
-
-            // 2. 檢查身分
+            // 1. 無身分 -> 顯示身分選擇
             if (!localStorage.getItem('my_squad_identity')) {
-                hideLoading();
+                document.getElementById('loading').style.display = 'none';
                 document.getElementById('identity-screen').classList.remove('hidden');
                 return; 
             }
-            // 重新讀取（以防被上面清除）
             myIdentity = localStorage.getItem('my_squad_identity');
 
-            // 3. 檢查 ID
+            // 2. 有身分，無 ID -> 顯示 Dashboard (Plan B)
             if (!currentLocationId) {
-                hideLoading();
-                alert("請掃描現場 QR Code 以進入任務");
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard-screen').classList.remove('hidden');
+                document.getElementById('status-badge').innerText = `SQUAD: ${TEAM_INFO[myIdentity].name}`;
+                document.getElementById('status-badge').style.borderColor = TEAM_INFO[myIdentity].color;
+                document.getElementById('status-badge').style.color = TEAM_INFO[myIdentity].color;
+                
+                // 順便載入通訊資料備用
+                fetchCommsData();
                 return;
             }
 
-            // 4. 正常流程
+            // 3. 有身分，有 ID -> 進入任務
             document.getElementById('app').classList.remove('hidden');
-            document.getElementById('identity-display').innerText = myIdentity + " SQUAD";
+            document.getElementById('identity-display').innerText = TEAM_INFO[myIdentity].name;
             await loadMissionData();
-
-            // ★ 啟動循環心跳偵測
+            
+            // 啟動心跳
             setInterval(() => checkHeartbeat(false), 5000);
         };
 
-        // --- 5. IDENTITY & ADMIN LOGIC ---
-        function setIdentity(team) {
-            if(confirm(`確認您的身分為 ${team} 小隊？\n確認後將無法更改。`)) {
-                localStorage.setItem('my_squad_identity', team);
-                myIdentity = team;
-                location.reload(); 
-            }
-        }
-
-        function openAdminModal() {
-            document.getElementById('admin-modal').classList.remove('hidden');
-        }
-
-        function closeAdminModal() {
-            document.getElementById('admin-modal').classList.add('hidden');
-            document.getElementById('admin-pin').value = '';
-        }
-
-        function confirmReset() {
-            const pin = document.getElementById('admin-pin').value;
-            if (pin === ADMIN_PIN) {
-                if(confirm("⚠ SYSTEM RESET ⚠\n確定要強制清除此裝置的身分嗎？")) {
-                    localStorage.removeItem('my_squad_identity');
-                    location.reload();
-                }
-            } else {
-                alert("授權碼錯誤 (ACCESS DENIED)");
-                document.getElementById('admin-pin').value = '';
-            }
-        }
-
-        // --- 6. HEARTBEAT & MISSION LOGIC ---
-        
-        // ★ 自動檢查新戰局 (最關鍵的修復)
+        // --- CORE LOGIC ---
         async function checkHeartbeat(isInit = false) {
-            const { data: sessions } = await supabase
-                .from('game_sessions')
-                .select('id')
-                .eq('is_active', true)
-                .order('created_at', { ascending: false })
-                .limit(1);
-
+            const { data: sessions } = await supabase.from('game_sessions').select('id').eq('is_active', true).order('created_at', { ascending: false }).limit(1);
             if (sessions && sessions.length > 0) {
                 const latestId = sessions[0].id;
                 const localSession = localStorage.getItem('last_active_session_id');
-
-                // 如果是第一次執行(isInit)，且本地沒有紀錄，就存下來
-                if (isInit && !localSession) {
-                    localStorage.setItem('last_active_session_id', latestId);
-                    activeSessionId = latestId;
-                    return;
-                }
-
-                // 如果資料庫的 ID 與 本地存的 ID 不同 -> 代表 HQ 重啟了
                 if (localSession && latestId !== localSession) {
-                    console.log("🔥 NEW SESSION DETECTED! FORCING RESET.");
-                    alert("⚠️ HQ 已重置戰局 ⚠️\n\n系統將自動刷新並清除身分設定。");
-                    
-                    // 強制清除所有狀態
                     localStorage.removeItem('my_squad_identity');
                     localStorage.setItem('last_active_session_id', latestId);
-                    
+                    alert("⚠️ HQ 已重置戰局，系統將自動刷新。");
                     location.reload();
                     return;
                 }
-                
-                // 更新當前記憶體中的 ID
+                if (isInit && !localSession) localStorage.setItem('last_active_session_id', latestId);
                 activeSessionId = latestId;
-                if(document.getElementById('session-id-disp')) {
-                    document.getElementById('session-id-disp').innerText = activeSessionId.split('-')[0];
-                }
+            }
+        }
+
+        async function fetchCommsData() {
+            if(!activeSessionId) return;
+            const { data } = await supabase.from('mission_states').select('comm_msg').eq('session_id', activeSessionId).eq('location_id', 'sys_config').single();
+            if(data && data.comm_msg) {
+                try { commsData = JSON.parse(data.comm_msg); } catch(e) {}
             }
         }
 
         async function loadMissionData() {
             if(!activeSessionId) return;
-
-            const { data, error } = await supabase
-                .from('mission_states')
-                .select('*')
-                .eq('session_id', activeSessionId)
-                .eq('location_id', currentLocationId)
-                .single();
-
-            if (error || !data) {
-                console.error("Mission data not found", error);
-                hideLoading();
-                alert("⚠ 無法取得任務資料\n(請確認 HQ 已啟動戰局)");
-                showScreen('screen-wait');
-                return;
-            }
-
-            currentMissionData = data;
-            hideLoading();
-
-            if (data.is_solved) {
-                showSuccess(data);
-            } else {
-                showInput(data);
-            }
+            const { data, error } = await supabase.from('mission_states').select('*').eq('session_id', activeSessionId).eq('location_id', currentLocationId).single();
+            document.getElementById('loading').style.display = 'none';
+            if (error || !data) { document.getElementById('screen-wait').classList.remove('hidden'); return; }
             
-            // 訂閱監聽 (確保即時更新)
-            const channel = supabase.channel('room-global')
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'mission_states', filter: `id=eq.${data.id}` }, (payload) => {
-                if (payload.new.is_solved) {
-                    currentMissionData.is_solved = true;
-                    showSuccess(payload.new);
-                }
+            currentMissionData = data;
+            if (data.is_solved) showSuccess(data);
+            else showInput(data);
+
+            const channel = supabase.channel('room-global').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'mission_states', filter: `id=eq.${data.id}` }, (payload) => {
+                if (payload.new.is_solved) { currentMissionData.is_solved = true; showSuccess(payload.new); }
             }).subscribe();
         }
 
-        function showInput(data) {
-            showScreen('screen-input');
-            document.getElementById('target-icon').innerText = data.icon;
-            document.getElementById('target-name').innerText = data.name;
-            document.getElementById('code-input').value = '';
-            document.getElementById('error-msg').style.display = 'none';
-
-            const targetTeamCode = TARGET_MAPPING[currentLocationId];
-            if (targetTeamCode) {
-                const targetInfo = TEAM_INFO[targetTeamCode];
-                const targetText = document.getElementById('call-target-text');
-                const callCard = document.getElementById('call-card');
-                
-                targetText.innerText = targetInfo.display;
-                targetText.style.color = targetInfo.color;
-                callCard.style.borderColor = targetInfo.color;
+        // --- UI ACTIONS ---
+        function setIdentity(team) {
+            if(confirm(`確認身分為 ${team} 小隊？`)) {
+                localStorage.setItem('my_squad_identity', team);
+                location.reload(); 
             }
         }
+        function openAdminModal() { document.getElementById('admin-modal').classList.remove('hidden'); }
+        function confirmReset() {
+            if (document.getElementById('admin-pin').value === ADMIN_PIN) {
+                localStorage.removeItem('my_squad_identity'); location.reload();
+            } else { alert("WRONG PIN"); }
+        }
 
+        function showInput(data) {
+            document.getElementById('screen-input').classList.remove('hidden');
+            document.getElementById('target-icon').innerText = data.icon;
+            document.getElementById('target-name').innerText = data.name;
+            const tCode = TARGET_MAPPING[currentLocationId];
+            if (tCode) {
+                const info = TEAM_INFO[tCode];
+                document.getElementById('call-target-text').innerText = info.name;
+                document.getElementById('call-target-text').style.color = info.color;
+                document.getElementById('call-card').style.borderColor = info.color;
+            }
+        }
         function showSuccess(data) {
-            showScreen('screen-success');
+            document.getElementById('screen-input').classList.add('hidden');
+            document.getElementById('screen-success').classList.remove('hidden');
             document.getElementById('next-hint').innerText = data.next_hint;
             document.getElementById('comm-msg').innerText = data.comm_msg;
         }
-
         async function submitCode() {
             const input = document.getElementById('code-input').value.toUpperCase().trim();
-            const correctCode = currentMissionData.code;
-
-            if (input === correctCode) {
-                document.getElementById('loading').style.display = 'flex';
-                const { error } = await supabase
-                    .from('mission_states')
-                    .update({ is_solved: true, solved_at: new Date() })
-                    .eq('id', currentMissionData.id);
-
-                if (error) {
-                    alert("NETWORK ERROR: 無法回傳數據");
-                    hideLoading();
-                    return;
-                }
-                // 本地先更新，不等監聽
-                currentMissionData.is_solved = true; 
-                showSuccess(currentMissionData);
-                hideLoading();
-
+            if (input === currentMissionData.code) {
+                await supabase.from('mission_states').update({ is_solved: true }).eq('id', currentMissionData.id);
+                currentMissionData.is_solved = true; showSuccess(currentMissionData);
             } else {
-                const errEl = document.getElementById('error-msg');
-                errEl.style.display = 'block';
-                errEl.innerText = "ACCESS DENIED";
-                const box = document.getElementById('code-input');
-                box.style.borderColor = 'red';
-                setTimeout(() => box.style.borderColor = '#00ff41', 500);
+                document.getElementById('error-msg').style.display = 'block';
             }
         }
 
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
-            const el = document.getElementById(id);
-            if(el) el.classList.remove('hidden');
-        }
-
-        // --- 7. BOOK UI ---
+        // --- TOOLS ---
         function openMyBook() {
             if (!myIdentity) return;
             const seeds = SEEDS[myIdentity];
             const info = TEAM_INFO[myIdentity];
             const contentArea = document.getElementById('book-content');
-            const header = document.getElementById('book-header');
-
-            header.innerText = info.name + " BOOK";
-            header.style.backgroundColor = info.color;
+            document.getElementById('book-header').innerText = info.name + " BOOK";
+            document.getElementById('book-header').style.backgroundColor = info.color;
             contentArea.innerHTML = '';
             
-            createCategoryGrid(contentArea, 'FRUITS / 水果', MASTER_ASSETS.fruits, seeds, info.color, 0);
-            createCategoryGrid(contentArea, 'ANIMALS / 動物', MASTER_ASSETS.animals, seeds, info.color, 12);
-            createCategoryGrid(contentArea, 'PLANTS / 植物', MASTER_ASSETS.plants, seeds, info.color, 18);
-
+            createCategoryGrid(contentArea, 'FRUITS', MASTER_ASSETS.fruits, seeds, info.color, 0);
+            createCategoryGrid(contentArea, 'ANIMALS', MASTER_ASSETS.animals, seeds, info.color, 12);
+            createCategoryGrid(contentArea, 'PLANTS', MASTER_ASSETS.plants, seeds, info.color, 18);
             document.getElementById('codebook-overlay').classList.remove('hidden');
         }
-
-        function closeCodeBook() {
-            document.getElementById('codebook-overlay').classList.add('hidden');
-        }
-
         function createCategoryGrid(container, title, assets, allSeeds, color, offsetIndex) {
-            const titleDiv = document.createElement('div');
-            titleDiv.className = 'book-category-title';
-            titleDiv.innerText = title;
-            container.appendChild(titleDiv);
-
-            const gridDiv = document.createElement('div');
-            gridDiv.className = 'book-grid';
-
-            assets.forEach((item, localIndex) => {
-                const globalIndex = offsetIndex + localIndex;
-                const code = allSeeds[globalIndex] || '????';
-
-                const itemCol = document.createElement('div');
-                itemCol.className = 'book-item-col';
-                itemCol.innerHTML = `<span class="book-icon">${item.i}</span><span>${item.n}</span>`;
-                
-                const codeCol = document.createElement('div');
-                codeCol.className = 'book-code-col';
-                codeCol.innerText = code;
-                codeCol.style.borderColor = color;
-                codeCol.style.color = color;
-
-                gridDiv.appendChild(itemCol);
-                gridDiv.appendChild(codeCol);
+            const gridDiv = document.createElement('div'); gridDiv.className = 'book-grid-list';
+            container.appendChild(document.createElement('div')).innerText = title;
+            assets.forEach((item, i) => {
+                const row = document.createElement('div'); row.style.display="contents";
+                row.innerHTML = `<div class="book-item-col"><span class="book-icon">${item.i}</span>${item.n}</div><div class="book-code-col" style="border-color:${color};color:${color}">${allSeeds[offsetIndex+i]}</div>`;
+                gridDiv.appendChild(row);
             });
             container.appendChild(gridDiv);
         }
 
+        function openNATO() {
+            const list = document.getElementById('nato-list');
+            list.innerHTML = '';
+            NATO.forEach(item => {
+                list.innerHTML += `<div class="nato-row"><span class="nato-char">${item[0]}</span><span class="nato-word">${item[1]}</span></div>`;
+            });
+            document.getElementById('nato-overlay').classList.remove('hidden');
+        }
+
+        async function openCommsInfo() {
+            if(!commsData) await fetchCommsData();
+            if(commsData) {
+                document.getElementById('disp-m1').innerText = commsData.main1 || '--';
+                document.getElementById('disp-m2').innerText = commsData.main2 || '--';
+                document.getElementById('disp-s1').innerText = commsData.sub1 || '--';
+                document.getElementById('disp-s2').innerText = commsData.sub2 || '--';
+                document.getElementById('disp-q').innerText = commsData.q || '--';
+                document.getElementById('disp-a').innerText = commsData.a || '--';
+            }
+            document.getElementById('comms-overlay').classList.remove('hidden');
+        }
     </script>
 </body>
 </html>
