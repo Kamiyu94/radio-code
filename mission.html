@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FIELD TERMINAL (FINAL)</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-main: #e0e0e0;
+            --highlight: #00ff41;
+            --danger: #ff3333;
+            --warning: #ffcc00;
+            --cool: #00ffff;
+            --panel-bg: #111111;
+            --border: #333;
+            --alpha: #ff3333;
+            --bravo: #33cc33;
+            --charlie: #3388ff;
+            --delta: #ffff33;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-variant-numeric: slashed-zero;
+            margin: 0;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .hidden { display: none !important; }
+        
+        /* 通用螢幕容器 */
+        .screen { 
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            padding: 20px; padding-top: 5vh; width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+            background: #000; z-index: 10; overflow-y: auto;
+        }
+
+        h1, h2 { text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 20px; color: var(--highlight); }
+        h2 { font-size: 1.2rem; margin-bottom: 15px; }
+
+        /* --- 新版首頁：小隊選擇選單 --- */
+        #squad-menu { z-index: 5; justify-content: center; padding-top: 20px; }
+        .menu-btn {
+            width: 100%; max-width: 320px; padding: 25px; margin-bottom: 20px;
+            font-size: 1.5rem; font-weight: 900; border-radius: 12px;
+            background: #111; color: #fff; border: 3px solid #333;
+            text-align: left; position: relative; cursor: pointer; transition: 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .menu-btn:active { transform: scale(0.97); filter: brightness(1.2); }
+        .menu-btn::after { content: '📓'; font-size: 1.8rem; }
+
+        /* --- 新版頁面：密碼本檢視 --- */
+        #codebook-view { z-index: 6; background: #050505; }
+        .book-header { 
+            width: 100%; padding: 15px; text-align: center; font-size: 1.5rem; font-weight: 900; 
+            color: #fff; margin-bottom: 20px; border-radius: 8px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        .book-category-title {
+            width: 100%; max-width: 350px;
+            color: #666; font-size: 0.8rem; margin-top: 15px; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 2px;
+        }
+
+        .book-grid {
+            display: grid; grid-template-columns: 1fr auto; gap: 8px;
+            width: 100%; max-width: 350px; margin-bottom: 10px;
+        }
+        
+        .book-item-col {
+            display: flex; align-items: center; padding: 10px;
+            background: rgba(255,255,255,0.05); border-radius: 6px 0 0 6px; font-size: 1rem;
+        }
+        .book-icon { font-size: 1.5rem; margin-right: 12px; }
+
+        .book-code-col {
+            display: flex; align-items: center; justify-content: center; padding: 10px; min-width: 100px;
+            background: rgba(0,0,0,0.3); border: 1px solid var(--highlight); border-radius: 0 6px 6px 0;
+            font-family: 'Consolas', monospace; font-size: 1.2rem; font-weight: 900; color: var(--highlight); letter-spacing: 1px;
+        }
+
+        .back-btn { margin-top: 30px; margin-bottom: 30px; background: #333; color: #ccc; border: none; }
+
+        /* --- 任務介面元件 --- */
+        .input-box {
+            background: #000; border: 2px solid var(--highlight); color: var(--highlight);
+            font-size: 2rem; padding: 15px; width: 100%; max-width: 300px; text-align: center;
+            border-radius: 8px; margin-bottom: 20px; outline: none; font-family: inherit; text-transform: uppercase; user-select: text;
+        }
+        .btn {
+            background: var(--panel-bg); border: 1px solid var(--highlight); color: var(--highlight);
+            padding: 15px 30px; font-size: 1.2rem; border-radius: 8px; cursor: pointer;
+            text-transform: uppercase; font-weight: bold; width: 100%; max-width: 300px; margin-bottom: 15px; transition: all 0.2s; flex-shrink: 0; 
+        }
+        .btn:active { background: var(--highlight); color: #000; transform: scale(0.98); }
+        
+        /* --- 任務狀態畫面 --- */
+        .target-icon { font-size: 6rem; margin-bottom: 10px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.05);} 100% {transform: scale(1);} }
+        .mission-hint { color: #888; font-size: 0.9rem; text-align: center; margin-bottom: 30px; max-width: 80%; }
+        
+        /* SUCCESS SCREEN */
+        #screen-success { background: #001a00; z-index: 20; text-align: center; padding-top: 5vh; }
+        .success-icon { font-size: 5rem; color: var(--highlight); margin-bottom: 20px; }
+        .success-title { color: var(--highlight); font-size: 1.5rem; font-weight: bold; margin-bottom: 20px; }
+        .next-step-box { border: 1px dashed var(--highlight); padding: 15px; border-radius: 8px; background: rgba(0, 255, 65, 0.1); margin-bottom: 10px; width: 100%; max-width: 320px; }
+        .step-label { color: #888; font-size: 0.8rem; display: block; margin-bottom: 5px; }
+        .step-val { color: #fff; font-size: 1.1rem; font-weight: bold; display: block; line-height: 1.4; }
+        .comm-val { color: #ffcc00; font-size: 1rem; font-weight: bold; display: block; line-height: 1.4; white-space: pre-line; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+    </style>
+</head>
+<body>
+
+    <div id="squad-menu" class="screen">
+        <h1>CODE BOOK ACCESS</h1>
+        <p style="color:#666; margin-bottom:30px;">OFFLINE DATABASE</p>
+        <p style="color:#888; font-size:0.8rem; margin-bottom:20px;">請選擇您所屬的小隊以查看密碼本</p>
+        
+        <div class="menu-btn" style="border-color:var(--alpha); color:var(--alpha);" onclick="showCodeBook('A')">ALPHA SQUAD</div>
+        <div class="menu-btn" style="border-color:var(--bravo); color:var(--bravo);" onclick="showCodeBook('B')">BRAVO SQUAD</div>
+        <div class="menu-btn" style="border-color:var(--charlie); color:var(--charlie);" onclick="showCodeBook('C')">CHARLIE SQUAD</div>
+        <div class="menu-btn" style="border-color:var(--delta); color:var(--delta);" onclick="showCodeBook('D')">DELTA SQUAD</div>
+    </div>
+
+    <div id="codebook-view" class="screen hidden">
+        <div id="book-header" class="book-header">SQUAD BOOK</div>
+        <p style="color:#666; font-size:0.8rem; margin-bottom:20px;">CONFIDENTIAL // EYES ONLY</p>
+        
+        <div id="book-content-area" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
+
+        <button class="btn back-btn" onclick="showScreen('squad-menu')">← BACK TO MENU</button>
+    </div>
+
+    <div id="screen-mission" class="screen hidden">
+        <div style="text-align:right; width:100%; padding:10px; color:#444; font-size:0.8rem;">SECURE CONNECTION</div>
+        <div id="target-display" class="target-icon">❓</div>
+        <div id="target-name" style="font-size:1.5rem; font-weight:bold; margin-bottom:5px;">TARGET</div>
+        <p class="mission-hint">向友軍單位索取解鎖代碼<br>REQUEST CODE FROM ALLY</p>
+        <input type="text" id="mission-input" class="input-box" placeholder="CODE" maxlength="10">
+        <button class="btn" onclick="verifyCode()">VERIFY CODE</button>
+    </div>
+
+    <div id="screen-success" class="screen hidden">
+        <div class="success-icon">✅</div>
+        <div class="success-title">ACCESS GRANTED</div>
+        <div class="next-step-box">
+            <span class="step-label">NEXT LOCATION (下一站)</span>
+            <span id="success-next-loc" class="step-val">...</span>
+        </div>
+        <div class="next-step-box">
+            <span class="step-label">COMM PROTOCOL (通訊指令)</span>
+            <span id="success-comm-msg" class="comm-val">...</span>
+        </div>
+        <button class="btn" style="margin-top:30px; border-color:#666; color:#666;" onclick="location.reload()">RELOAD TERMINAL</button>
+    </div>
+
+    <script>
+        // --- 1. CODEBOOKS DATA (完整資料庫) ---
+        // 包含四個小隊各自獨立的資料與密碼
+        const CODEBOOKS = {
+            A: {
+                fruits: [
+                    {n:"葡萄", i:"🍇", c:"L2Z5"}, {n:"西瓜", i:"🍉", c:"P8K3"}, {n:"橘子", i:"🍊", c:"S4M1"}, {n:"檸檬", i:"🍋", c:"T4W7"},
+                    {n:"蘋果", i:"🍎", c:"X4T9"}, {n:"桃子", i:"🍑", c:"N8R3"}, {n:"櫻桃", i:"🍒", c:"E9I2"}, {n:"梨子", i:"🍐", c:"Q4Y9"},
+                    {n:"椰子", i:"🥥", c:"B1D6"}, {n:"酪梨", i:"🥑", c:"H5J0"}, {n:"糖果", i:"🍬", c:"F3G8"}, {n:"芒果", i:"🥭", c:"K7X1"},
+                    {n:"哈密瓜", i:"🍈", c:"V2C5"}, {n:"番茄", i:"🍅", c:"O6A4"}, {n:"草莓", i:"🍓", c:"U9E2"}, {n:"鳳梨", i:"🍍", c:"Z3N7"}
+                ],
+                animals: [
+                    {n:"老鷹", i:"🦅", c:"D5S2"}, {n:"蛇", i:"🐍", c:"W9F0"}, {n:"鯊魚", i:"🦈", c:"H1J3"}, {n:"斑馬", i:"🦓", c:"O3A0"},
+                    {n:"鯨魚", i:"🐳", c:"V2D6"}, {n:"獵豹", i:"🐆", c:"K8B4"}, {n:"獅子", i:"🦁", c:"C7M1"}, {n:"袋鼠", i:"🦘", c:"G6P9"},
+                    {n:"鱷魚", i:"🐊", c:"X2U5"}, {n:"大猩猩", i:"🦍", c:"T1I8"}, {n:"河馬", i:"🦛", c:"E4Z7"}, {n:"長頸鹿", i:"🦒", c:"N3Y0"},
+                    {n:"蝙蝠", i:"🦇", c:"Q5L2"}, {n:"貓頭鷹", i:"🦉", c:"R9S6"}, {n:"駱駝", i:"🐪", c:"M7H3"}, {n:"孔雀", i:"🦚", c:"A0F1"}
+                ],
+                plants: [
+                    {n:"向日葵", i:"🌻", c:"G2V4"}, {n:"仙人掌", i:"🌵", c:"B8H7"}, {n:"竹子", i:"🎋", c:"L6P2"}, {n:"蘑菇", i:"🍄", c:"S8M2"},
+                    {n:"扶桑花", i:"🌺", c:"F5G8"}, {n:"橡樹", i:"🌳", c:"T1Q9"}, {n:"楓葉", i:"🍁", c:"Z7D5"}, {n:"薰衣草", i:"💐", c:"K3I6"},
+                    {n:"薄荷", i:"🌿", c:"E2A4"}, {n:"松樹", i:"🌲", c:"J3R6"}, {n:"小麥", i:"🌾", c:"Y9X1"}, {n:"蘆葦", i:"🌱", c:"O5N0"},
+                    {n:"落葉", i:"🍂", c:"H4W8"}, {n:"雛菊", i:"🌼", c:"C6U3"}, {n:"房屋", i:"🏡", c:"V0S7"}, {n:"貝殼", i:"🐚", c:"P8M5"}
+                ]
+            },
+            B: {
+                fruits: [
+                    {n:"香蕉", i:"🍌", c:"A3O7"}, {n:"鳳梨", i:"🍍", c:"U6Q4"}, {n:"梨子", i:"🍐", c:"B2H9"}, {n:"蘋果", i:"🍎", c:"C5K1"},
+                    {n:"西瓜", i:"🍉", c:"D8M3"}, {n:"糖果", i:"🍬", c:"E0N6"}, {n:"奇異果", i:"🥝", c:"F4P2"}, {n:"草莓", i:"🍓", c:"G7Q5"},
+                    {n:"椰子", i:"🥥", c:"I1R8"}, {n:"芒果", i:"🥭", c:"J9S0"}, {n:"葡萄", i:"🍇", c:"L3T6"}, {n:"櫻桃", i:"🍒", c:"V2X7"},
+                    {n:"檸檬", i:"🍋", c:"W5Y3"}, {n:"橘子", i:"🍊", c:"Z8A4"}, {n:"番茄", i:"🍅", c:"B6C9"}, {n:"哈密瓜", i:"🍈", c:"D1E5"}
+                ],
+                animals: [
+                    {n:"老虎", i:"🐯", c:"Y5N8"}, {n:"大象", i:"🐘", c:"S2K9"}, {n:"獵豹", i:"🐆", c:"F7G1"}, {n:"狼", i:"🐺", c:"H3I6"},
+                    {n:"熊", i:"🐻", c:"J0L4"}, {n:"狐狸", i:"🦊", c:"M8O2"}, {n:"獅子", i:"🦁", c:"P5Q9"}, {n:"斑馬", i:"🦓", c:"R1T7"},
+                    {n:"袋鼠", i:"🦘", c:"U4V0"}, {n:"長頸鹿", i:"🦒", c:"W6X3"}, {n:"鯊魚", i:"🦈", c:"Z9A5"}, {n:"老鷹", i:"🦅", c:"B2C8"},
+                    {n:"貓頭鷹", i:"🦉", c:"D7E1"}, {n:"蛇", i:"🐍", c:"F3G6"}, {n:"鱷魚", i:"🐊", c:"H9I2"}, {n:"熊貓", i:"🐼", c:"K4L0"}
+                ],
+                plants: [
+                    {n:"玫瑰", i:"🌹", c:"M4X0"}, {n:"楓葉", i:"🍁", c:"Z7D5"}, {n:"椰子樹", i:"🌴", c:"A2B6"}, {n:"幸運草", i:"🍀", c:"C9E1"},
+                    {n:"向日葵", i:"🌻", c:"F3G8"}, {n:"仙人掌", i:"🌵", c:"H5I0"}, {n:"鬱金香", i:"🌷", c:"J1K7"}, {n:"扶桑花", i:"🌺", c:"L6N3"},
+                    {n:"松樹", i:"🌲", c:"O8P2"}, {n:"稻穗", i:"🌾", c:"Q4R9"}, {n:"蘑菇", i:"🍄", c:"S0T5"}, {n:"竹子", i:"🎋", c:"U7V1"},
+                    {n:"雛菊", i:"🌼", c:"W2Y6"}, {n:"薰衣草", i:"💐", c:"Z5A3"}, {n:"薄荷", i:"🌿", c:"B9C4"}, {n:"貝殼", i:"🐚", c:"D1E8"}
+                ]
+            },
+            C: {
+                fruits: [
+                    {n:"草莓", i:"🍓", c:"V1G5"}, {n:"桃子", i:"🍑", c:"N8R3"}, {n:"梨子", i:"🍐", c:"A4B7"}, {n:"檸檬", i:"🍋", c:"C9D1"},
+                    {n:"椰子", i:"🥥", c:"E2F6"}, {n:"葡萄", i:"🍇", c:"G5H0"}, {n:"哈密瓜", i:"🍈", c:"I8J3"}, {n:"西瓜", i:"🍉", c:"K1L9"},
+                    {n:"橘子", i:"🍊", c:"M6N4"}, {n:"鳳梨", i:"🍍", c:"O3P7"}, {n:"蘋果", i:"🍎", c:"Q0R2"}, {n:"香蕉", i:"🍌", c:"S5T8"},
+                    {n:"芒果", i:"🥭", c:"U7V9"}, {n:"番茄", i:"🍅", c:"W2X5"}, {n:"糖果", i:"🍬", c:"Y6Z1"}, {n:"酪梨", i:"🥑", c:"A9B4"}
+                ],
+                animals: [
+                    {n:"狼", i:"🐺", c:"F6B2"}, {n:"熊貓", i:"🐼", c:"I9E4"}, {n:"獅子", i:"🦁", c:"C2D8"}, {n:"老虎", i:"🐅", c:"G7H1"},
+                    {n:"斑馬", i:"🦓", c:"J3K5"}, {n:"老鷹", i:"🦅", c:"L0M9"}, {n:"鱷魚", i:"🐊", c:"N4O6"}, {n:"鯊魚", i:"🦈", c:"P8Q2"},
+                    {n:"大象", i:"🐘", c:"R1S7"}, {n:"貓頭鷹", i:"🦉", c:"T5U0"}, {n:"長頸鹿", i:"🦒", c:"V9W3"}, {n:"河馬", i:"🦛", c:"X6Y1"},
+                    {n:"大猩猩", i:"🦍", c:"Z2A8"}, {n:"狐狸", i:"🦊", c:"B7C3"}, {n:"袋鼠", i:"🦘", c:"D0E5"}, {n:"熊", i:"🐻", c:"F4G9"}
+                ],
+                plants: [
+                    {n:"鬱金香", i:"🌷", c:"Q7U1"}, {n:"椰子樹", i:"🌴", c:"C5Y9"}, {n:"蘑菇", i:"🍄", c:"S8M2"}, {n:"竹子", i:"🎋", c:"A3B6"},
+                    {n:"楓葉", i:"🍁", c:"D0E4"}, {n:"松樹", i:"🌲", c:"F9G2"}, {n:"扶桑花", i:"🌺", c:"H1I5"}, {n:"仙人掌", i:"🌵", c:"J6K8"},
+                    {n:"向日葵", i:"🌻", c:"L2M7"}, {n:"玫瑰", i:"🌹", c:"N4O0"}, {n:"幸運草", i:"🍀", c:"P8R3"}, {n:"稻穗", i:"🌾", c:"S5T9"},
+                    {n:"薰衣草", i:"💐", c:"V1W6"}, {n:"雛菊", i:"🌼", c:"X7Z2"}, {n:"薄荷", i:"🌿", c:"A9B3"}, {n:"貝殼", i:"🐚", c:"C0D5"}
+                ]
+            },
+            D: {
+                fruits: [
+                    {n:"奇異果", i:"🥝", c:"J6H2"}, {n:"梨子", i:"🍐", c:"Q4Y9"}, {n:"芒果", i:"🥭", c:"K7X1"}, {n:"香蕉", i:"🍌", c:"A2B5"},
+                    {n:"蘋果", i:"🍎", c:"C8D0"}, {n:"櫻桃", i:"🍒", c:"E3F9"}, {n:"葡萄", i:"🍇", c:"G6I4"}, {n:"西瓜", i:"🍉", c:"L1M7"},
+                    {n:"草莓", i:"🍓", c:"N5O2"}, {n:"檸檬", i:"🍋", c:"P9R3"}, {n:"鳳梨", i:"🍍", c:"S4T8"}, {n:"哈密瓜", i:"🍈", c:"U0V6"},
+                    {n:"橘子", i:"🍊", c:"W7Z1"}, {n:"酪梨", i:"🥑", c:"A5B9"}, {n:"椰子", i:"🥥", c:"C2D6"}, {n:"番茄", i:"🍅", c:"E8F3"}
+                ],
+                animals: [
+                    {n:"熊", i:"🐻", c:"R3Z5"}, {n:"狐狸", i:"🦊", c:"L8P0"}, {n:"鯨魚", i:"🐳", c:"V2D6"}, {n:"老虎", i:"🐯", c:"A7B1"},
+                    {n:"獅子", i:"🦁", c:"C9E4"}, {n:"狼", i:"🐺", c:"F5G8"}, {n:"大象", i:"🐘", c:"H2I6"}, {n:"大猩猩", i:"🦍", c:"J0K3"},
+                    {n:"鱷魚", i:"🐊", c:"M4N9"}, {n:"獵豹", i:"🐆", c:"O6Q2"}, {n:"長頸鹿", i:"🦒", c:"S1T7"}, {n:"老鷹", i:"🦅", c:"U8V3"},
+                    {n:"貓頭鷹", i:"🦉", c:"W5X0"}, {n:"蝙蝠", i:"🦇", c:"Y9Z4"}, {n:"河馬", i:"🦛", c:"A3B8"}, {n:"袋鼠", i:"🦘", c:"C6D2"}
+                ],
+                plants: [
+                    {n:"幸運草", i:"🍀", c:"N9T4"}, {n:"稻穗", i:"🌾", c:"W1E3"}, {n:"扶桑花", i:"🌺", c:"F5G8"}, {n:"玫瑰", i:"🌹", c:"H2I7"},
+                    {n:"鬱金香", i:"🌷", c:"J6K0"}, {n:"松樹", i:"🌲", c:"L4M9"}, {n:"向日葵", i:"🌻", c:"O3P5"}, {n:"仙人掌", i:"🌵", c:"Q8R1"},
+                    {n:"竹子", i:"🎋", c:"S2T6"}, {n:"楓葉", i:"🍁", c:"U7V4"}, {n:"椰子樹", i:"🌴", c:"X0Y5"}, {n:"薰衣草", i:"💐", c:"Z9A3"},
+                    {n:"雛菊", i:"🌼", c:"B8C2"}, {n:"薄荷", i:"🌿", c:"D1E6"}, {n:"貝殼", i:"🐚", c:"F5G0"}, {n:"房屋", i:"🏡", c:"H4I9"}
+                ]
+            }
+        };
+
+        // --- 2. 任務資料 (Mission Data) ---
+        // c 已經根據上方 CODEBOOKS 的資料重新校對更新
+        const missions = {
+            // --- ALPHA SQUAD PATH ---
+            'loc_1': { i: '🍌', n: '香蕉', c: 'A3O7', next: '前往 LOC 5', comm: '切換至 [主頻 CH2]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'B' }, 
+            'loc_5': { i: '🐺', n: '狼', c: 'F6B2', next: '前往 LOC 9', comm: '切換至 [主頻 CH1]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'C' }, 
+            'loc_9': { i: '🍀', n: '幸運草', c: 'C9E1', next: 'MISSION COMPLETE', comm: '回報 HQ 並等候指示。', target_book: 'B' }, 
+            
+            // --- BRAVO SQUAD PATH ---
+            'loc_2': { i: '🍎', n: '蘋果', c: 'X4T9', next: '前往 LOC 7', comm: '頻道不變 (Maintain Channel)。', target_book: 'A' }, 
+            'loc_7': { i: '🐻', n: '熊', c: 'R3Z5', next: '前往 LOC 10', comm: '切換至 [主頻 CH2]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'D' }, 
+            'loc_10': { i: '🌵', n: '仙人掌', c: 'J6K8', next: 'MISSION COMPLETE', comm: '回報 HQ 並等候指示。', target_book: 'C' }, 
+
+            // --- CHARLIE SQUAD PATH ---
+            'loc_3': { i: '🥝', n: '奇異果', c: 'J6H2', next: '前往 LOC 6', comm: '頻道不變 (Maintain Channel)。', target_book: 'D' }, 
+            'loc_6': { i: '🦁', n: '獅子', c: 'C7M1', next: '前往 LOC 11', comm: '頻道不變 (Maintain Channel)。', target_book: 'A' }, 
+            'loc_11': { i: '🌴', n: '椰子樹', c: 'A2B6', next: 'MISSION COMPLETE', comm: '回報 HQ 並等候指示。', target_book: 'B' }, 
+
+            // --- DELTA SQUAD PATH ---
+            'loc_4': { i: '🍓', n: '草莓', c: 'V1G5', next: '前往 LOC 8', comm: '切換至 [主頻 CH1]。\n切換後，請呼叫該頻道的友軍單位。', target_book: 'C' }, 
+            'loc_8': { i: '🐯', n: '老虎', c: 'Y5N8', next: '前往 LOC 12', comm: '頻道不變 (Maintain Channel)。', target_book: 'B' }, 
+            'loc_12': { i: '🌲', n: '松樹', c: 'J3R6', next: 'MISSION COMPLETE', comm: '回報 HQ 並等候指示。', target_book: 'A' }    
+        };
+
+        const teamColors = { 'A': 'var(--alpha)', 'B': 'var(--bravo)', 'C': 'var(--charlie)', 'D': 'var(--delta)' };
+        const teamNames = { 'A': 'ALPHA SQUAD', 'B': 'BRAVO SQUAD', 'C': 'CHARLIE SQUAD', 'D': 'DELTA SQUAD' };
+
+        // --- 3. STATE MANAGEMENT ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const missionId = urlParams.get('id');
+        let missionData = null;
+
+        // --- 4. INITIALIZATION ---
+        window.onload = function() {
+            if (!missionId || !missions[missionId]) {
+                showScreen('squad-menu');
+            } else {
+                missionData = missions[missionId];
+                initMission();
+            }
+        };
+
+        // --- 5. UI FUNCTIONS (密碼本邏輯) ---
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            window.scrollTo(0, 0); 
+        }
+
+        function showCodeBook(teamId) {
+            const bookData = CODEBOOKS[teamId];
+            const color = teamColors[teamId];
+            const name = teamNames[teamId];
+            const contentArea = document.getElementById('book-content-area');
+            const header = document.getElementById('book-header');
+
+            header.innerText = name + " BOOK";
+            header.style.backgroundColor = color;
+
+            contentArea.innerHTML = '';
+            
+            createCategoryGrid(contentArea, 'FRUITS / 水果', bookData.fruits, color);
+            createCategoryGrid(contentArea, 'ANIMALS / 動物', bookData.animals, color); 
+            createCategoryGrid(contentArea, 'PLANTS / 植物', bookData.plants, color); 
+
+            showScreen('codebook-view');
+        }
+
+        function createCategoryGrid(container, title, items, color) {
+            // 標題
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'book-category-title';
+            titleDiv.innerText = title;
+            container.appendChild(titleDiv);
+
+            // Grid 容器
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'book-grid';
+
+            items.forEach((item) => {
+                // 左側：圖示 + 名稱
+                const itemCol = document.createElement('div');
+                itemCol.className = 'book-item-col';
+                itemCol.innerHTML = `<span class="book-icon">${item.i}</span><span>${item.n}</span>`;
+                
+                // 右側：密碼
+                const codeCol = document.createElement('div');
+                codeCol.className = 'book-code-col';
+                codeCol.innerText = item.c; // 直接顯示該小隊的專屬密碼
+                codeCol.style.borderColor = color;
+                codeCol.style.color = color;
+
+                gridDiv.appendChild(itemCol);
+                gridDiv.appendChild(codeCol);
+            });
+
+            container.appendChild(gridDiv);
+        }
+
+        // --- 6. MISSION LOGIC ---
+        function initMission() {
+            document.getElementById('target-display').innerText = missionData.i;
+            document.getElementById('target-name').innerText = missionData.n;
+            showScreen('screen-mission');
+        }
+
+        function verifyCode() {
+            const inputEl = document.getElementById('mission-input');
+            let rawInput = inputEl.value.toUpperCase();
+            let cleanInput = rawInput.replace(/[^A-Z0-9]/g, ''); // 移除連字號和空白
+            let fuzzyInput = cleanInput.replace(/0/g, 'O');
+            let targetCode = missionData.c.replace(/0/g, 'O'); // Target 也是乾淨的 4 碼
+            
+            if (fuzzyInput === targetCode) {
+                document.getElementById('success-next-loc').innerText = missionData.next;
+                document.getElementById('success-comm-msg').innerText = missionData.comm;
+                showScreen('screen-success');
+            } else {
+                shakeElement(inputEl);
+                inputEl.value = '';
+            }
+        }
+
+        function shakeElement(el) {
+            el.style.transform = 'translateX(10px)';
+            setTimeout(() => el.style.transform = 'translateX(-10px)', 50);
+            setTimeout(() => el.style.transform = 'translateX(10px)', 100);
+            setTimeout(() => el.style.transform = 'translateX(0)', 150);
+            el.style.borderColor = 'red';
+            setTimeout(() => el.style.borderColor = 'var(--highlight)', 500);
+        }
+    </script>
+</body>
+</html>
