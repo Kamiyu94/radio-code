@@ -111,7 +111,9 @@
         // 1. CONFIGURATION
         const SUPABASE_URL = 'https://lqhgpeuoejdyodanvauv.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxaGdwZXVvZWpkeW9kYW52YXV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDUyMzAsImV4cCI6MjA3OTA4MTIzMH0.my3U8mN06xm79ArFamTpWydf7rYFXOKT5-ooKmqb_O4';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // 【修正重點】改名為 db，避免與官方庫名稱衝突
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // 2. DATA
         const ITEMS_LIST = ["葡萄", "西瓜", "橘子", "檸檬", "蘋果", "梨子", "椰子", "芒果", "哈密瓜", "番茄", "草莓", "鳳梨", "獅子", "老鷹", "鱷魚", "貓頭鷹", "長頸鹿", "袋鼠", "向日葵", "仙人掌", "竹子", "扶桑花", "楓葉", "薰衣草", "薄荷", "松樹", "雛菊", "貝殼"];
@@ -133,6 +135,8 @@
             animals: [{n:"獅子", i:"🦁"}, {n:"老鷹", i:"🦅"}, {n:"鱷魚", i:"🐊"}, {n:"貓頭鷹", i:"🦉"}, {n:"長頸鹿", i:"🦒"}, {n:"袋鼠", i:"🦘"}],
             plants: [{n:"向日葵", i:"🌻"}, {n:"仙人掌", i:"🌵"}, {n:"竹子", i:"🎋"}, {n:"扶桑花", i:"🌺"}, {n:"楓葉", i:"🍁"}, {n:"薰衣草", i:"💐"}, {n:"薄荷", i:"🌿"}, {n:"松樹", i:"🌲"}, {n:"雛菊", i:"🌼"}, {n:"貝殼", i:"🐚"}]
         };
+
+        let activeSessionId = null;
 
         function shuffle(array) {
             let currentIndex = array.length, randomIndex;
@@ -156,7 +160,8 @@
                 a: document.getElementById('challenge_a').value
             };
 
-            const { data: session, error: sessionError } = await supabase.from('game_sessions').insert([{ is_active: true }]).select().single();
+            // 【修正】使用 db.from
+            const { data: session, error: sessionError } = await db.from('game_sessions').insert([{ is_active: true }]).select().single();
             if(sessionError) { document.getElementById('loading').style.display = 'none'; alert(`ERROR: ${sessionError.message}`); return; }
             activeSessionId = session.id;
 
@@ -199,7 +204,8 @@
                 comm_msg: JSON.stringify(sysConfig)
             });
 
-            const { error: missionError } = await supabase.from('mission_states').insert(payload);
+            // 【修正】使用 db.from
+            const { error: missionError } = await db.from('mission_states').insert(payload);
             document.getElementById('loading').style.display = 'none';
             if(missionError) { alert(`ERROR: ${missionError.message}`); return; }
             document.getElementById('status-text').innerText = `SESSION ACTIVE: ${activeSessionId.split('-')[0]}...`;
@@ -224,8 +230,9 @@
 
         let currentChannel = null;
         function startListening() {
-            if (currentChannel) supabase.removeChannel(currentChannel);
-            currentChannel = supabase.channel('room-global').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'mission_states' }, (payload) => {
+            // 【修正】使用 db.removeChannel 和 db.channel
+            if (currentChannel) db.removeChannel(currentChannel);
+            currentChannel = db.channel('room-global').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'mission_states' }, (payload) => {
                 if (payload.new.session_id !== activeSessionId) return;
                 const updated = payload.new;
                 if (updated.is_solved) {
@@ -236,10 +243,11 @@
         }
 
         window.onload = async () => {
-             const { data: sessions } = await supabase.from('game_sessions').select('id').eq('is_active', true).order('created_at', { ascending: false }).limit(1);
+             // 【修正】使用 db.from
+             const { data: sessions } = await db.from('game_sessions').select('id').eq('is_active', true).order('created_at', { ascending: false }).limit(1);
              if(sessions && sessions.length > 0) {
                  activeSessionId = sessions[0].id;
-                 const { data: missions } = await supabase.from('mission_states').select('*').eq('session_id', activeSessionId);
+                 const { data: missions } = await db.from('mission_states').select('*').eq('session_id', activeSessionId);
                  if(missions) { renderDashboard(missions); startListening(); document.getElementById('status-text').innerText = `RESUMED SESSION: ${activeSessionId.split('-')[0]}...`; }
              }
         }
@@ -256,7 +264,7 @@
         }
         function closeQR() { document.getElementById('qrModal').style.display = 'none'; }
 
-        // --- 4. PRINT FUNCTION (EXPANDED FOR CLARITY) ---
+        // --- 4. PRINT FUNCTION ---
         function generateCodeBook() {
             const iconMap = {};
             Object.values(MASTER_ASSETS).forEach(category => {
