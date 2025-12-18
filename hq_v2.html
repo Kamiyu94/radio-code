@@ -20,7 +20,10 @@
         .config-group { margin-bottom: 20px; border-bottom: 1px dashed #333; padding-bottom: 15px; }
         .config-label { color: #888; font-size: 0.8rem; display: block; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
         
+        /* 預設 (電腦版) 網格 */
         .channel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .challenge-row { display: flex; gap: 15px; }
+
         .input-row { display: flex; align-items: center; margin-bottom: 10px; }
         
         .ch-label { font-weight: bold; font-size: 1.2rem; width: 50px; }
@@ -30,10 +33,10 @@
         .input-dark { 
             background: #222; border: 1px solid #444; color: #fff; padding: 8px 10px; 
             flex: 1; font-family: inherit; font-size: 1.1rem; border-radius: 4px;
+            min-width: 0; /* 防止輸入框撐爆容器 */
         }
         .input-dark:focus { border-color: var(--highlight); outline: none; }
 
-        .challenge-row { display: flex; gap: 15px; }
         .challenge-input-group { flex: 1; display: flex; flex-direction: column; }
         .challenge-label { font-size: 0.8rem; color: #666; margin-bottom: 5px; }
 
@@ -61,6 +64,23 @@
         .close-btn { margin-top: 20px; background: var(--danger); color: #fff; border: none; padding: 10px 30px; font-size: 1.2rem; cursor: pointer; border-radius: 5px; }
         .mini-qr-btn { position: absolute; top: 5px; right: 5px; background: transparent; border: 1px solid #444; color: #666; cursor: pointer; padding: 2px 6px; font-size: 0.8rem; border-radius: 4px; z-index: 10; }
         .mini-qr-btn:hover { color: var(--highlight); border-color: var(--highlight); }
+
+        /* --- 📱 MOBILE RESPONSIVE FIX (手機版修正) --- */
+        @media (max-width: 768px) {
+            body { padding: 10px; } /* 縮小邊距 */
+            
+            /* 強制單欄排列 */
+            .channel-grid { grid-template-columns: 1fr; gap: 10px; }
+            
+            /* 口令區改為上下排列 */
+            .challenge-row { flex-direction: column; gap: 10px; }
+            
+            /* 調整儀表板在手機上的顯示 (改為2欄，不然4欄太擠) */
+            .dashboard { grid-template-columns: repeat(2, 1fr); }
+            
+            /* 標題字體縮小 */
+            h1 { font-size: 1.2rem; }
+        }
     </style>
 </head>
 <body>
