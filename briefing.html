@@ -2,14 +2,19 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TOP SECRET // MISSION BRIEFING</title>
     <style>
         :root {
             --bg-color: #000000;
             --text-main: #00ff41; /* 駭客綠 */
-            --alert: #ff3333;      /* 警告紅 */
+            --alert: #ff3333;     /* 警告紅 */
             --dim: #444;
+        }
+
+        /* 【修正 1】全域盒模型設定，避免 padding 撐大寬高 */
+        * {
+            box-sizing: border-box;
         }
 
         body {
@@ -18,10 +23,17 @@
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             margin: 0;
             padding: 20px;
+            
+            /* 【修正 2】使用 dvh 解決手機網址列遮擋問題，並保留 vh 作為舊瀏覽器備案 */
             height: 100vh;
+            height: 100dvh; 
+            
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            
+            /* 【修正 3】避開 iPhone 底部橫條 */
+            padding-bottom: env(safe-area-inset-bottom); 
         }
 
         /* 復古掃描線特效 */
@@ -44,13 +56,15 @@
             justify-content: space-between;
             align-items: flex-end;
             z-index: 3;
+            /* 防止 header 被壓縮 */
+            flex-shrink: 0; 
         }
 
         .logo-text { font-weight: 900; font-size: 1.2rem; letter-spacing: 2px; }
         .date-text { font-size: 0.8rem; color: var(--text-main); }
 
         .content-box {
-            flex: 1;
+            flex: 1; /* 佔據剩餘空間 */
             overflow-y: auto;
             border: 1px solid var(--dim);
             padding: 20px;
@@ -58,14 +72,15 @@
             box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
             position: relative;
             z-index: 3;
+            min-height: 0; /* Firefox Flexbox 溢出修復 */
         }
 
         /* 打字機文字樣式 */
         .line {
             margin-bottom: 15px;
             line-height: 1.6;
-            font-size: 1.1rem; /* 字體稍微調大一點，方便閱讀 */
-            opacity: 0; /* 預設隱藏，靠 JS 顯示 */
+            font-size: 1.1rem;
+            opacity: 0;
             transform: translateY(10px);
             transition: opacity 0.5s, transform 0.5s;
         }
@@ -79,6 +94,9 @@
             text-align: center;
             z-index: 3;
             min-height: 60px;
+            /* 【修正 4】防止 footer 被壓縮 */
+            flex-shrink: 0;
+            padding-bottom: 10px; /* 多留一點底部空間 */
         }
 
         .btn {
@@ -118,19 +136,23 @@
             padding: 10px 20px;
             text-transform: uppercase;
             opacity: 0;
-            pointer-events: none; /* 關鍵：讓滑鼠事件穿透印章，方便滑動 */
+            pointer-events: none;
             z-index: 100;
             mix-blend-mode: screen;
-            /* 增加透明度變化的過渡效果，讓淡入淡出更滑順 */
             transition: opacity 0.5s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             background: rgba(0,0,0,0.6); 
         }
         
-        /* 蓋章狀態 (正常顯示) */
         .stamp.stamped { opacity: 1; transform: translate(-50%, -50%) rotate(-15deg) scale(1); }
-        
-        /* 淡化狀態 (當使用者往回捲動時) */
         .stamp.faded { opacity: 0.05 !important; }
+
+        /* 手機版字體微調 */
+        @media (max-width: 600px) {
+            .logo-text { font-size: 1rem; }
+            .content-box { padding: 15px; }
+            .line { font-size: 1rem; }
+            .stamp { font-size: 2rem; border-width: 3px; }
+        }
 
     </style>
 </head>
@@ -188,7 +210,7 @@
         let lineIndex = 0;
         let isAnimationFinished = false;
 
-        // 4. 打字機效果 (速度放慢)
+        // 4. 打字機效果
         function typeWriter() {
             if (lineIndex < storyLines.length) {
                 const p = document.createElement('div');
@@ -202,8 +224,8 @@
                 contentBox.scrollTop = contentBox.scrollHeight;
 
                 lineIndex++;
-                // 速度調整：原本是 300+100，現在改慢一點
-                const delay = Math.random() * 800 + 400; 
+                // 稍微加快一點速度，改善手機體驗
+                const delay = Math.random() * 500 + 200; 
                 setTimeout(typeWriter, delay);
             } else {
                 finishAnimation();
@@ -233,7 +255,6 @@
             if (!isAnimationFinished) return; // 動畫還沒跑完前不干擾
 
             // 計算距離底部的距離
-            // scrollHeight (總高度) - scrollTop (捲動位置) - clientHeight (視窗高度)
             const distanceToBottom = contentBox.scrollHeight - contentBox.scrollTop - contentBox.clientHeight;
 
             // 如果距離底部超過 50px (代表使用者往回捲動了)，就讓印章淡化
